@@ -17,7 +17,6 @@ public class PipelineRunController {
     private final PipelineRunService pipelineRunService;
 
     @PostMapping("/pipelines/{pipelineId}/runs")
-
     public Result<PipelineRunVO> create(
             @PathVariable Long pipelineId,
             @Valid @RequestBody PipelineRunCreateRequest request,

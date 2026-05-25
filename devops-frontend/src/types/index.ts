@@ -285,6 +285,7 @@ export interface PipelineDefinitionCreateRequest {
 export interface PipelineDefinitionUpdateRequest {
   name: string
   description?: string
+  repositoryId: number
   triggerType: PipelineTriggerType
   enabled?: boolean
 }

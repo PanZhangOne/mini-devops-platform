@@ -281,6 +281,7 @@ export function PipelineFormDialog({
         updateMutation.mutate({
             name: form.name.trim(),
             description: emptyToUndefined(form.description),
+            repositoryId: Number(form.repositoryId),
             triggerType: form.triggerType,
             enabled: form.enabled,
         })
@@ -312,7 +313,6 @@ export function PipelineFormDialog({
                             label="仓库"
                             value={form.repositoryId}
                             onChange={(event) => setForm((current) => ({...current, repositoryId: event.target.value}))}
-                            disabled={mode === 'edit'}
                             options={[
                                 {value: '', label: '选择仓库'},
                                 ...filteredRepos.map((repo) => ({value: String(repo.id), label: repo.repoName})),

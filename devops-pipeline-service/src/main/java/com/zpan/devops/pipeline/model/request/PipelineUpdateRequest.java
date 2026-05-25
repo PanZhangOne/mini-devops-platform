@@ -1,6 +1,7 @@
 package com.zpan.devops.pipeline.model.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -16,6 +17,9 @@ public class PipelineUpdateRequest {
 
     @NotBlank(message = "触发类型不能为空")
     private String triggerType;
+
+    @NotNull(message = "代码仓库不能为空")
+    private Long repositoryId;
 
     private Boolean enabled;
 }

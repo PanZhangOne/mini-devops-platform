@@ -86,6 +86,7 @@ public class PipelineServiceImpl implements PipelineService {
         pipeline.setTriggerType(request.getTriggerType());
         pipeline.setEnabled(request.getEnabled());
         pipeline.setUpdatedAt(LocalDateTime.now());
+        pipeline.setRepositoryId(request.getRepositoryId());
 
         pipelineMapper.updateById(pipeline);
         return toVO(pipeline);

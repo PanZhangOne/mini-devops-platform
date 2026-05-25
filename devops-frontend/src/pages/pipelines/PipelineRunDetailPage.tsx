@@ -1,10 +1,25 @@
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Clock3, Terminal } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { pipelineApi } from '@/api/pipeline'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import type { PipelineLogRecord } from '@/types'
 import { FieldLabel, formatDateTime, formatDuration, pipelineStatusTone, SectionCard } from './PipelinesPage'
+
+const ACTIVE_STATUSES = new Set(['PENDING', 'RUNNING'])
+
+function getAuthToken(): string | null {
+  try {
+    const raw = localStorage.getItem('auth-storage')
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { state?: { token?: string } }
+    return parsed?.state?.token ?? null
+  } catch {
+    return null
+  }
+}
 
 export function PipelineRunDetailPage() {
   const { runId } = useParams<{ runId: string }>()
@@ -12,11 +27,19 @@ export function PipelineRunDetailPage() {
   const numericRunId = Number(runId)
   const isValidId = Number.isFinite(numericRunId) && numericRunId > 0
 
+  const logContainerRef = useRef<HTMLDivElement>(null)
+  const [streamLogs, setStreamLogs] = useState<PipelineLogRecord[]>([])
+  const [isStreaming, setIsStreaming] = useState(false)
+
   const { data: run, isLoading } = useQuery({
     queryKey: ['pipeline-run', numericRunId],
     queryFn: () => pipelineApi.getPipelineRun(numericRunId),
     enabled: isValidId,
+    refetchInterval: (query) =>
+      ACTIVE_STATUSES.has((query.state.data as { status?: string } | undefined)?.status ?? '') ? 3000 : false,
   })
+
+  const isActive = ACTIVE_STATUSES.has(run?.status ?? '')
 
   const { data: pipeline } = useQuery({
     queryKey: ['pipeline', run?.pipelineId],
@@ -28,15 +51,83 @@ export function PipelineRunDetailPage() {
     queryKey: ['pipeline-run-steps', numericRunId],
     queryFn: () => pipelineApi.listPipelineRunSteps(numericRunId),
     enabled: isValidId,
+    refetchInterval: isActive ? 3000 : false,
     select: (data) => (data ?? []).slice().sort((left, right) => left.sortOrder - right.sortOrder),
   })
 
-  const { data: logs = [], isLoading: isLogsLoading } = useQuery({
+  // Static logs for completed runs
+  const { data: staticLogs = [], isLoading: isLogsLoading } = useQuery({
     queryKey: ['pipeline-run-logs', numericRunId],
     queryFn: () => pipelineApi.listPipelineRunLogs(numericRunId),
-    enabled: isValidId,
+    enabled: isValidId && !isActive,
     select: (data) => (data ?? []).slice().sort((left, right) => +new Date(left.logTime) - +new Date(right.logTime)),
   })
+
+  // SSE streaming for active runs
+  useEffect(() => {
+    if (!isValidId || !isActive) return
+
+    let cancelled = false
+    setStreamLogs([])
+    setIsStreaming(true)
+
+    async function connectSSE() {
+      const token = getAuthToken()
+      const headers: Record<string, string> = {
+        Accept: 'text/event-stream',
+        'Cache-Control': 'no-cache',
+      }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+
+      try {
+        const response = await fetch(`/api/pipeline/pipeline-runs/${numericRunId}/logs/stream`, { headers })
+        if (!response.body || cancelled) return
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        while (!cancelled) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+
+          // SSE format: one or more "data: <json>\n\n" blocks
+          const blocks = buffer.split('\n\n')
+          buffer = blocks.pop() ?? ''
+
+          for (const block of blocks) {
+            const dataLine = block.split('\n').find((l) => l.startsWith('data:'))
+            if (!dataLine) continue
+            const json = dataLine.slice(5).trim()
+            if (!json) continue
+            try {
+              const record = JSON.parse(json) as PipelineLogRecord
+              setStreamLogs((prev) => [...prev, record])
+            } catch {
+              // ignore malformed event
+            }
+          }
+        }
+      } finally {
+        if (!cancelled) setIsStreaming(false)
+      }
+    }
+
+    connectSSE()
+    return () => {
+      cancelled = true
+    }
+  }, [numericRunId, isActive, isValidId])
+
+  // Auto-scroll to bottom when logs update
+  useEffect(() => {
+    const el = logContainerRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [streamLogs, staticLogs])
+
+  const displayLogs = isActive ? streamLogs : staticLogs
+  const logsLoading = isActive ? (isStreaming && streamLogs.length === 0) : isLogsLoading
 
   if (!isValidId) {
     return <div className="p-8 text-sm text-[var(--color-text-muted)]">无效的运行记录 ID。</div>
@@ -140,15 +231,21 @@ export function PipelineRunDetailPage() {
         <div className="p-5 border-b border-[var(--color-border)] flex items-center gap-2">
           <Terminal size={16} className="text-[var(--color-text-muted)]" />
           <h2 className="text-lg font-semibold text-[var(--color-text)]">运行日志</h2>
+          {isActive && isStreaming && (
+            <span className="ml-auto text-xs text-emerald-500 animate-pulse">● 实时推送中</span>
+          )}
         </div>
         <div className="p-5">
-          {isLogsLoading ? (
+          {logsLoading ? (
             <div className="text-sm text-[var(--color-text-muted)]">加载日志中...</div>
-          ) : logs.length === 0 ? (
+          ) : displayLogs.length === 0 ? (
             <div className="text-sm text-[var(--color-text-muted)]">暂无日志。</div>
           ) : (
-            <div className="max-h-[520px] overflow-auto rounded-[var(--radius-lg)] bg-slate-950 p-4 text-slate-100 text-xs font-mono space-y-2">
-              {logs.map((log) => (
+            <div
+              ref={logContainerRef}
+              className="max-h-[520px] overflow-auto rounded-[var(--radius-lg)] bg-slate-950 p-4 text-slate-100 text-xs font-mono space-y-2"
+            >
+              {displayLogs.map((log) => (
                 <div key={log.id}>
                   <span className="text-slate-400">[{formatDateTime(log.logTime)}]</span>{' '}
                   <span className="text-sky-300">[{log.logLevel}]</span>{' '}

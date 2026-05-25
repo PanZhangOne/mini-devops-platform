@@ -1,0 +1,22 @@
+server:
+  port: ${SERVER_PORT:9020}
+
+spring:
+  application:
+    name: devops-auth-service
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  config:
+    import:
+      - optional:nacos:${spring.application.name}-${SPRING_PROFILES_ACTIVE:dev}.yml
+
+  cloud:
+    nacos:
+      server-addr: 192.168.199.107:8848
+      discovery:
+        server-addr: ${spring.cloud.nacos.server-addr}
+      config:
+        server-addr: ${spring.cloud.nacos.server-addr}
+        file-extension: yml

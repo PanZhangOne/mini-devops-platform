@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: mini-devops-platform-work
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgresql
+      POSTGRES_PASSWORD: postgresql
+      POSTGRES_DB: mini_devops_work
+    ports:
+      - "5432:5432"
+    volumes:
+      - guide_pro_pgdata:/var/lib/postgresql/data
+
+volumes:
+  guide_pro_pgdata:

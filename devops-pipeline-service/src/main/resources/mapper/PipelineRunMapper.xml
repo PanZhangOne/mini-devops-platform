@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zpan.devops.pipeline.mapper.PipelineRunMapper">
+    <update id="claimPendingRun">
+        UPDATE devops_pipeline_run
+        SET status = #{newStatus},
+        assigned_runner_name = #{runnerName},
+        started_at = #{startedAt},
+        updated_at = #{updatedAt}
+        WHERE id = #{id}
+        AND status = #{expectedStatus}
+    </update>
+</mapper>

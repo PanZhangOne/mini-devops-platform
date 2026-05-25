@@ -1,0 +1,54 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Java / Maven build outputs
+**/target/
+**/out/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven wrapper cache
+.mvn/wrapper/maven-wrapper.jar
+
+# Node.js / frontend
+**/node_modules/
+**/dist/
+**/.vite/
+**/.cache/
+**/.turbo/
+**/coverage/
+**/.eslintcache
+**/*.tsbuildinfo
+
+# Environment and local config
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Docker and container temp files
+docker-data/
+*.pid
+
+# Test reports
+**/surefire-reports/
+**/failsafe-reports/
+

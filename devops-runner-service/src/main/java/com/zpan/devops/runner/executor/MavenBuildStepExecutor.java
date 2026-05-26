@@ -7,7 +7,6 @@ import com.zpan.devops.runner.model.step.MavenBuildStepConfig;
 import com.zpan.devops.runner.util.StepConfigParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -15,7 +14,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 
 @Slf4j
 @Component
@@ -24,16 +22,13 @@ public class MavenBuildStepExecutor {
 
     private final StepConfigParser stepConfigParser;
 
-    @Value("${devops.runner.java-home:}")
-    private String javaHome;
-
     public ExecuteResult execute(PipelineStepRunVO stepRun, Path workspaceDir, LogConsumer logConsumer) {
         MavenBuildStepConfig config;
 
         try {
             config = stepConfigParser.parse(stepRun.getConfigJson(), MavenBuildStepConfig.class);
         } catch (Exception e) {
-            return ExecuteResult.failed(-1, e.getMessage());
+            return  ExecuteResult.failed(-1, e.getMessage());
         }
 
         String workDir = config.getWorkDir();
@@ -71,14 +66,6 @@ public class MavenBuildStepExecutor {
             ProcessBuilder processBuilder = new ProcessBuilder("sh", "-c", command);
             processBuilder.directory(workDir.toFile());
             processBuilder.redirectErrorStream(true);
-
-            if (javaHome != null && !javaHome.isBlank()) {
-                Map<String, String> env = processBuilder.environment();
-                env.put("JAVA_HOME", javaHome);
-                env.put("PATH", javaHome + "/bin:" + env.getOrDefault("PATH", ""));
-                logConsumer.accept("INFO", "使用指定JDK：" + javaHome);
-            }
-
             process = processBuilder.start();
 
             try (BufferedReader reader = new BufferedReader(

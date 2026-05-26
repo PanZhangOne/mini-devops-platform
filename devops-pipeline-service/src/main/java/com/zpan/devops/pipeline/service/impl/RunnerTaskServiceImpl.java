@@ -98,7 +98,7 @@ public class RunnerTaskServiceImpl implements RunnerTaskService {
                 run.getId(),
                 stepRun.getId(),
                 PipelineLogLevel.INFO.name(),
-                "开始执行步骤：" + stepRun.getName()
+                "开始执行步骤: " + stepRun.getName()
         );
     }
 
@@ -300,6 +300,7 @@ public class RunnerTaskServiceImpl implements RunnerTaskService {
         logVO.setLogLevel(logLevel);
         logVO.setContent(content);
         logVO.setCreatedAt(now);
+
         logStreamService.publishLog(pipelineRunId, logVO);
     }
 

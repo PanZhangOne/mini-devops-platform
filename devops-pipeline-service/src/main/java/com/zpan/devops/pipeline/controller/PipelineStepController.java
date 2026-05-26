@@ -18,32 +18,32 @@ public class PipelineStepController {
 
     @PostMapping("/pipelines/{pipelineId}/steps")
     public Result<PipelineStepVO> create(
-            @PathVariable Long pipelineId,
-            @Valid @RequestBody PipelineStepCreateRequest request
+            @PathVariable("pipelineId") Long pipelineId,
+            PipelineStepCreateRequest request
     ) {
         return Result.success(pipelineStepService.create(pipelineId, request));
     }
 
     @GetMapping("/pipelines/{pipelineId}/steps")
-    public Result<List<PipelineStepVO>> listByPipelineId(@PathVariable Long pipelineId) {
+    public Result<List<PipelineStepVO>> listByPipelineId(@PathVariable("pipelineId") Long pipelineId) {
         return Result.success(pipelineStepService.listByPipelineId(pipelineId));
     }
 
     @GetMapping("/pipeline-steps/{id}")
-    public Result<PipelineStepVO> getById(@PathVariable Long id) {
+    public Result<PipelineStepVO> getById(@PathVariable("id") Long id) {
         return Result.success(pipelineStepService.getById(id));
     }
 
     @PutMapping("/pipeline-steps/{id}")
     public Result<PipelineStepVO> update(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody PipelineStepUpdateRequest request
     ) {
         return Result.success(pipelineStepService.update(id, request));
     }
 
     @DeleteMapping("/pipeline-steps/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         pipelineStepService.delete(id);
         return Result.success();
     }

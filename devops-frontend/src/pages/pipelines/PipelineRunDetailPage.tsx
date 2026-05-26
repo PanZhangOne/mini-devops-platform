@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Clock3, Terminal } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { pipelineApi } from '@/api/pipeline'
@@ -27,9 +27,11 @@ export function PipelineRunDetailPage() {
   const numericRunId = Number(runId)
   const isValidId = Number.isFinite(numericRunId) && numericRunId > 0
 
+  const queryClient = useQueryClient()
   const logContainerRef = useRef<HTMLDivElement>(null)
   const [streamLogs, setStreamLogs] = useState<PipelineLogRecord[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
+  const [streamError, setStreamError] = useState<string | null>(null)
 
   const { data: run, isLoading } = useQuery({
     queryKey: ['pipeline-run', numericRunId],
@@ -81,7 +83,15 @@ export function PipelineRunDetailPage() {
 
       try {
         const response = await fetch(`/api/pipeline/pipeline-runs/${numericRunId}/logs/stream`, { headers })
+
+        if (!response.ok) {
+          setStreamError(`日志流连接失败 (HTTP ${response.status})`)
+          setIsStreaming(false)
+          return
+        }
+
         if (!response.body || cancelled) return
+        setStreamError(null)
 
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
@@ -92,21 +102,33 @@ export function PipelineRunDetailPage() {
           if (done) break
           buffer += decoder.decode(value, { stream: true })
 
-          // SSE format: one or more "data: <json>\n\n" blocks
+          // SSE blocks are separated by double newlines
           const blocks = buffer.split('\n\n')
           buffer = blocks.pop() ?? ''
 
           for (const block of blocks) {
-            const dataLine = block.split('\n').find((l) => l.startsWith('data:'))
+            if (!block.trim()) continue
+            const lines = block.split('\n')
+            const eventName = lines.find((l) => l.startsWith('event:'))?.slice(6).trim() ?? 'message'
+            const dataLine = lines.find((l) => l.startsWith('data:'))
             if (!dataLine) continue
             const json = dataLine.slice(5).trim()
             if (!json) continue
-            try {
-              const record = JSON.parse(json) as PipelineLogRecord
-              setStreamLogs((prev) => [...prev, record])
-            } catch {
-              // ignore malformed event
+
+            if (eventName === 'log') {
+              try {
+                const record = JSON.parse(json) as PipelineLogRecord
+                setStreamLogs((prev) => [...prev, record])
+              } catch {
+                // ignore malformed log event
+              }
+            } else if (eventName === 'complete') {
+              // Stream finished — refresh run & step status
+              void queryClient.invalidateQueries({ queryKey: ['pipeline-run', numericRunId] })
+              void queryClient.invalidateQueries({ queryKey: ['pipeline-run-steps', numericRunId] })
+              void queryClient.invalidateQueries({ queryKey: ['pipeline-run-logs', numericRunId] })
             }
+            // 'connected' events are intentionally ignored
           }
         }
       } finally {
@@ -118,7 +140,7 @@ export function PipelineRunDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [numericRunId, isActive, isValidId])
+  }, [numericRunId, isActive, isValidId, queryClient])
 
   // Auto-scroll to bottom when logs update
   useEffect(() => {
@@ -236,7 +258,9 @@ export function PipelineRunDetailPage() {
           )}
         </div>
         <div className="p-5">
-          {logsLoading ? (
+          {streamError ? (
+            <div className="text-sm text-red-500">{streamError}</div>
+          ) : logsLoading ? (
             <div className="text-sm text-[var(--color-text-muted)]">加载日志中...</div>
           ) : displayLogs.length === 0 ? (
             <div className="text-sm text-[var(--color-text-muted)]">暂无日志。</div>

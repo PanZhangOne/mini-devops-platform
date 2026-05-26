@@ -34,13 +34,13 @@ public class RunnerController {
     }
 
     @GetMapping("/runners/{id}")
-    public Result<RunnerVO> getById(@PathVariable Long id) {
+    public Result<RunnerVO> getById(@PathVariable("id") Long id) {
         return Result.success(runnerService.getById(id));
     }
 
     @PatchMapping("/runners/{id}/status")
     public Result<RunnerVO> updateStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody RunnerStatusUpdateRequest request
     ) {
         return Result.success(runnerService.updateStatus(id, request.getStatus()));

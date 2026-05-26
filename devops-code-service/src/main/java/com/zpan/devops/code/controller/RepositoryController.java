@@ -24,7 +24,7 @@ public class RepositoryController {
     }
 
     @GetMapping
-    public Result<List<RepositoryVO>> list(@RequestParam(required = false) Long projectId) {
+    public Result<List<RepositoryVO>> list(@RequestParam(value = "projectId", required = false) Long projectId) {
         if (projectId != null) {
             return Result.success(repositoryService.listByProjectId(projectId));
         }

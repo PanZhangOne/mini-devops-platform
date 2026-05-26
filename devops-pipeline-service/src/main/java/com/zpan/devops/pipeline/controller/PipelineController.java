@@ -27,25 +27,25 @@ public class PipelineController {
     }
 
     @GetMapping
-    public Result<List<PipelineVO>> list(@RequestParam(required = false) Long projectId) {
+    public Result<List<PipelineVO>> list(@RequestParam(value = "projectId", required = false) Long projectId) {
         return Result.success(pipelineService.list(projectId));
     }
 
     @GetMapping("/{id}")
-    public Result<PipelineVO> getById(@PathVariable Long id) {
+    public Result<PipelineVO> getById(@PathVariable("id") Long id) {
         return Result.success(pipelineService.getById(id));
     }
 
     @PutMapping("/{id}")
     public Result<PipelineVO> update(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody PipelineUpdateRequest request
     ) {
         return Result.success(pipelineService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         pipelineService.delete(id);
         return Result.success();
 

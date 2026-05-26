@@ -28,18 +28,18 @@ public class VersionController {
     }
 
     @GetMapping
-    public Result<List<VersionVO>> list(@RequestParam(required = false) Long projectId) {
+    public Result<List<VersionVO>> list(@RequestParam(value = "projectId", required = false) Long projectId) {
         return Result.success(versionService.list(projectId));
     }
 
     @GetMapping("/{id}")
-    public Result<VersionVO> getById(@PathVariable Long id) {
+    public Result<VersionVO> getById(@PathVariable("id") Long id) {
         return Result.success(versionService.getById(id));
     }
 
     @PutMapping("/{id}")
     public Result<VersionVO> update(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody VersionUpdateRequest request
     ) {
         return Result.success(versionService.update(id, request));
@@ -47,15 +47,14 @@ public class VersionController {
 
     @PatchMapping("/{id}/status")
     public Result<VersionVO> updateStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody VersionStatusUpdateRequest request
     ) {
         return Result.success(versionService.updateStatus(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
-        versionService.delete(id);
+    public Result<Void> delete(@PathVariable("id") Long id) {
         return Result.success();
     }
 }

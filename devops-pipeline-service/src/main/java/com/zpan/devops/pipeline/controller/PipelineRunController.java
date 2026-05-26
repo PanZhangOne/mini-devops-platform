@@ -18,7 +18,7 @@ public class PipelineRunController {
 
     @PostMapping("/pipelines/{pipelineId}/runs")
     public Result<PipelineRunVO> create(
-            @PathVariable Long pipelineId,
+            @PathVariable("pipelineId") Long pipelineId,
             @Valid @RequestBody PipelineRunCreateRequest request,
             @RequestHeader(value = "X-User-Id", required = false) Long currentUserId
     ) {
@@ -31,17 +31,17 @@ public class PipelineRunController {
     }
 
     @GetMapping("/pipeline-runs/{id}")
-    public Result<PipelineRunVO> getById(@PathVariable Long id) {
+    public Result<PipelineRunVO> getById(@PathVariable("id") Long id) {
         return Result.success(pipelineRunService.getById(id));
     }
 
     @GetMapping("/pipeline-runs/{id}/steps")
-    public Result<List<PipelineStepRunVO>> listSteps(@PathVariable Long id) {
+    public Result<List<PipelineStepRunVO>> listSteps(@PathVariable("id") Long id) {
         return Result.success(pipelineRunService.listSteps(id));
     }
 
     @GetMapping("/pipeline-runs/{id}/logs")
-    public Result<List<PipelineLogVO>> listLogs(@PathVariable Long id) {
+    public Result<List<PipelineLogVO>> listLogs(@PathVariable("id") Long id) {
         return Result.success(pipelineRunService.listLogs(id));
     }
 }

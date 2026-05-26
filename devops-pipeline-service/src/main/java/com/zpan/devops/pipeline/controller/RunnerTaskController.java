@@ -21,7 +21,7 @@ public class RunnerTaskController {
 
     @PostMapping("/{pipelineRunId}/workspace")
     public Result<Void> updateWorkspace(
-            @PathVariable Long pipelineRunId,
+            @PathVariable("pipelineRunId") Long pipelineRunId,
             @Valid @RequestBody RunnerTaskWorkspaceUpdateRequest request
     ) {
         runnerTaskService.updateWorkspace(pipelineRunId, request);
@@ -30,8 +30,8 @@ public class RunnerTaskController {
 
     @PostMapping("/{pipelineRunId}/steps/{stepRunId}/start")
     public Result<Void> startStep(
-            @PathVariable Long pipelineRunId,
-            @PathVariable Long stepRunId,
+            @PathVariable("pipelineRunId") Long pipelineRunId,
+            @PathVariable("stepRunId") Long stepRunId,
             @Valid @RequestBody RunnerTaskStepStartRequest request
     ) {
         runnerTaskService.startStep(pipelineRunId, stepRunId, request);
@@ -40,8 +40,8 @@ public class RunnerTaskController {
 
     @PostMapping("/{pipelineRunId}/steps/{stepRunId}/finish")
     public Result<Void> finishStep(
-            @PathVariable Long pipelineRunId,
-            @PathVariable Long stepRunId,
+            @PathVariable("pipelineRunId") Long pipelineRunId,
+            @PathVariable("stepRunId") Long stepRunId,
             @Valid @RequestBody RunnerTaskStepFinishRequest request
     ) {
         runnerTaskService.finishStep(pipelineRunId, stepRunId, request);
@@ -50,7 +50,7 @@ public class RunnerTaskController {
 
     @PostMapping("/{pipelineRunId}/logs")
     public Result<Void> appendLog(
-            @PathVariable Long pipelineRunId,
+            @PathVariable("pipelineRunId") Long pipelineRunId,
             @Valid @RequestBody RunnerTaskLogAppendRequest request
     ) {
         runnerTaskService.appendLog(pipelineRunId, request);
@@ -59,7 +59,7 @@ public class RunnerTaskController {
 
     @PostMapping("/{pipelineRunId}/finish")
     public Result<Void> finishRun(
-            @PathVariable Long pipelineRunId,
+            @PathVariable("pipelineRunId") Long pipelineRunId,
             @Valid @RequestBody RunnerTaskFinishRequest request
     ) {
         runnerTaskService.finishRun(pipelineRunId, request);

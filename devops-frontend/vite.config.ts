@@ -17,6 +17,15 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:9000',
         changeOrigin: true,
+        // Allow SSE long-lived connections to stay open
+        configure: (proxy) => {
+          proxy.on('proxyReq', (_proxyReq, req) => {
+            if (req.headers['accept']?.includes('text/event-stream')) {
+              // Prevent the proxy from timing out streaming connections
+              req.socket.setTimeout(0)
+            }
+          })
+        },
       },
     },
   },

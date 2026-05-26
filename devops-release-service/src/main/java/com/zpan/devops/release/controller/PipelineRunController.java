@@ -34,21 +34,20 @@ public class PipelineRunController {
     }
 
     @GetMapping("/{id}")
-    public Result<PipelineRunVO> getById(@PathVariable Long id) {
+    public Result<PipelineRunVO> getById(@PathVariable("id") Long id) {
         return Result.success(pipelineRunService.getById(id));
     }
 
     @PatchMapping("/{id}/status")
     public Result<PipelineRunVO> updateStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody PipelineRunStatusUpdateRequest request
     ) {
         return Result.success(pipelineRunService.updateStatus(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
-        pipelineRunService.delete(id);
+    public Result<Void> delete(@PathVariable("id") Long id) {
         return Result.success();
     }
 }

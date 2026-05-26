@@ -12,6 +12,7 @@ import com.zpan.devops.pipeline.mapper.*;
 import com.zpan.devops.pipeline.model.request.PipelineRunCreateRequest;
 import com.zpan.devops.pipeline.model.request.PipelineRunQueryRequest;
 import com.zpan.devops.pipeline.model.vo.*;
+import com.zpan.devops.pipeline.service.LogStreamService;
 import com.zpan.devops.pipeline.service.PipelineRunService;
 import com.zpan.devops.pipeline.service.PipelineService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,8 @@ public class PipelineRunServiceImpl implements PipelineRunService {
     private final PipelineStepRunMapper pipelineStepRunMapper;
 
     private final PipelineLogMapper pipelineLogMapper;
+
+    private final LogStreamService logStreamService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -200,6 +203,7 @@ public class PipelineRunServiceImpl implements PipelineRunService {
         log.setCreatedAt(now);
 
         pipelineLogMapper.insert(log);
+        logStreamService.publishLog(pipelineRunId, toLogVO(log));
     }
 
     private String generateRunNo() {

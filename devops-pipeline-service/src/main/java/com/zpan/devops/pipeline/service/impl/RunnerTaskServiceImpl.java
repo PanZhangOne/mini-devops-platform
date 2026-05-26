@@ -16,8 +16,10 @@ import com.zpan.devops.pipeline.mapper.PipelineRunMapper;
 import com.zpan.devops.pipeline.mapper.PipelineStepRunMapper;
 import com.zpan.devops.pipeline.mapper.RunnerMapper;
 import com.zpan.devops.pipeline.model.request.*;
+import com.zpan.devops.pipeline.model.vo.PipelineLogVO;
 import com.zpan.devops.pipeline.model.vo.PipelineStepRunVO;
 import com.zpan.devops.pipeline.model.vo.RunnerTaskVO;
+import com.zpan.devops.pipeline.service.LogStreamService;
 import com.zpan.devops.pipeline.service.RunnerTaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,8 @@ public class RunnerTaskServiceImpl implements RunnerTaskService {
     private final PipelineStepRunMapper pipelineStepRunMapper;
 
     private final PipelineLogMapper pipelineLogMapper;
+
+    private final LogStreamService logStreamService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -183,6 +187,7 @@ public class RunnerTaskServiceImpl implements RunnerTaskService {
                 PipelineLogLevel.INFO.name(),
                 message
         );
+        logStreamService.publishComplete(run.getId(), request.getStatus());
     }
 
     @Override
@@ -286,6 +291,16 @@ public class RunnerTaskServiceImpl implements RunnerTaskService {
         log.setCreatedAt(now);
 
         pipelineLogMapper.insert(log);
+
+        PipelineLogVO logVO = new PipelineLogVO();
+        logVO.setId(log.getId());
+        logVO.setPipelineRunId(pipelineRunId);
+        logVO.setStepRunId(stepRunId);
+        logVO.setLogTime(now);
+        logVO.setLogLevel(logLevel);
+        logVO.setContent(content);
+        logVO.setCreatedAt(now);
+        logStreamService.publishLog(pipelineRunId, logVO);
     }
 
     private RunnerTaskVO toRunnerTaskVO(PipelineRun run, List<PipelineStepRun> stepRuns) {

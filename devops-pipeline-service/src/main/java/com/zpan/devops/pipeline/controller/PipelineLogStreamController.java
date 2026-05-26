@@ -21,7 +21,7 @@ public class PipelineLogStreamController {
             value = "/pipeline-runs/{id}/logs/stream",
             produces = MediaType.TEXT_EVENT_STREAM_VALUE
     )
-    public SseEmitter streamLogs(@PathVariable Long id) {
+    public SseEmitter streamLogs(@PathVariable("id") Long id) {
         pipelineRunService.getById(id);
         return logStreamService.subscribe(id);
     }

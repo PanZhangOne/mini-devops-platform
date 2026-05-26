@@ -22,3 +22,7 @@ spring:
         server-addr: ${spring.cloud.nacos.server-addr}
         file-extension: yml
 
+devops:
+  runner:
+    java-home: ${RUNNER_JAVA_HOME:}
+

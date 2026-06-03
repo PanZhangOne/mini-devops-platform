@@ -6,4 +6,6 @@ import lombok.Data;
 public class DockerPushStepConfig {
 
     private String imageTag;
+
+    private Long credentialId;
 }

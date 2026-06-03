@@ -9,6 +9,7 @@ import com.zpan.devops.common.security.JwtUtils;
 import com.zpan.devops.common.security.LoginUser;
 import com.zpan.devops.gateway.config.GatewayAuthProperties;
 import com.zpan.devops.gateway.config.GatewayJwtProperties;
+import com.zpan.devops.gateway.security.AuthWhitelist;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -34,7 +35,10 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     private final GatewayJwtProperties jwtProperties;
 
     private final GatewayAuthProperties gatewayAuthProperties;
+
     private final ObjectMapper objectMapper;
+
+    private AuthWhitelist authWhitelist;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -72,8 +76,14 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
 
             ServerHttpRequest mutatedRequest = exchange.getRequest()
                     .mutate()
-                    .header("X-User-Id", String.valueOf(loginUser.getUserId()))
-                    .header("X-Username", loginUser.getUsername())
+                    .headers(headers -> {
+                        headers.remove("X-User-Id");
+                        headers.remove("X-Username");
+                        headers.add("X-User-id", String.valueOf(loginUser.getUserId()));
+                        if (loginUser.getUserId() != null && !loginUser.getUsername().isBlank()) {
+                            headers.add("X-Username", loginUser.getUsername());
+                        }
+                    })
                     .build();
 
             ServerWebExchange mutatedExchange = exchange.mutate()
@@ -109,7 +119,7 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     }
 
     private List<String> getDefaultWhiteList() {
-        return List.of("/api/auth/register", "/api/auth/login", "/login", "/register", "/api/auth/ping");
+        return authWhitelist.getWhitelist();
     }
 
     private String parseBearerToken(String authorization) {
@@ -141,6 +151,6 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return 0;
+        return -50;
     }
 }

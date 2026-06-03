@@ -413,3 +413,37 @@ export interface RunnerRecord {
 export interface RunnerStatusUpdatePayload {
   status: RunnerStatus
 }
+
+// ─── Credential ───────────────────────────────────────────────────────────────
+
+export type CredentialType = 'USERNAME_PASSWORD' | 'TOKEN'
+
+export interface Credential {
+  id: number
+  projectId: number
+  name: string
+  credentialType: CredentialType
+  credentialTypeDescription: string
+  username: string
+  description: string
+  createdBy: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CredentialCreateRequest {
+  projectId: number
+  name: string
+  credentialType: CredentialType
+  username?: string
+  secretValue: string
+  description?: string
+}
+
+export interface CredentialUpdateRequest {
+  name: string
+  credentialType: CredentialType
+  username?: string
+  secretValue?: string
+  description?: string
+}

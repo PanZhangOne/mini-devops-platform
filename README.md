@@ -34,6 +34,19 @@
 - pnpm 9+
 - Docker / Docker Compose
 
+## 内部错误代码
+
+```
+10000 - common 通用错误
+20000 - auth-service
+30000 - work-service
+40000 - code-service
+50000 - release-service
+70000 - pipeline-service
+73000 - runner
+74000 - credential
+```
+
 ## 本地开发
 
 ### 1. 启动 PostgreSQL

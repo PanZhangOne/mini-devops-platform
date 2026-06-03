@@ -5,39 +5,40 @@ import lombok.Getter;
 @Getter
 public enum ErrorCode {
 
+    // devops-common 项目
     SUCCESS(0, "success"),
+    PARAM_ERROR(10000, "请求参数错误"),
+    UNAUTHORIZED(10001, "未登录或登录已过期"),
+    FORBIDDEN(10002, "无权限访问"),
+    NOT_FOUND(10003, "资源不存在"),
+    SYSTEM_ERROR(10004, "系统内部异常"),
+    SERVICE_UNAVAILABLE(10005, "服务暂不可用"),
+    REMOTE_SERVICE_ERROR(10006, "远程服务调用失败"),
 
-    PARAM_ERROR(40000, "请求参数错误"),
-    UNAUTHORIZED(40100, "未登录或登录已过期"),
-    FORBIDDEN(40300, "无权限访问"),
-    NOT_FOUND(40400, "资源不存在"),
+    // devops-auth-service
+    USERNAME_EXISTS(20001, "用户名已存在"),
+    USERNAME_OR_PASSWORD_ERROR(20002, "用户名或密码错误"),
+    USER_DISABLED(20003, "用户已被禁用"),
+    TOKEN_INVALID(20004, "Token 无效"),
+    TOKEN_EXPIRED(20005, "Token 已过期"),
 
-    SYSTEM_ERROR(50000, "系统内部异常"),
-    SERVICE_UNAVAILABLE(50300, "服务暂不可用"),
+    // devops-work-service
+    PROJECT_NOT_FOUND(30001, "项目不存在"),
+    PROJECT_CODE_EXISTS(30002, "项目编码已存在"),
+    PROJECT_HAS_TASKS(30003, "项目中存在任务"),
+    TASK_NOT_FOUND(30004, "任务不存在"),
+    TASK_STATUS_INVALID(30005, "任务状态不合法"),
 
-    PROJECT_NOT_FOUND(10001, "项目不存在"),
-    PROJECT_CODE_EXISTS(10002, "项目编码已存在"),
-    PROJECT_HAS_TASKS(10003, "项目中存在任务"),
+    // devops-code-service
+    REPOSITORY_NOT_FOUND(40001, "代码仓库不存在"),
+    REPOSITORY_URL_EXISTS(40002, "该项目下代码仓库地址已存在"),
 
-    TASK_NOT_FOUND(20001, "任务不存在"),
-    TASK_STATUS_INVALID(20002, "任务状态不合法"),
-
-    REPOSITORY_NOT_FOUND(30001, "代码仓库不存在"),
-    REPOSITORY_URL_EXISTS(30002, "该项目下代码仓库地址已存在"),
-    REMOTE_SERVICE_ERROR(30003, "远程服务调用失败"),
-
-
-    USERNAME_EXISTS(40001, "用户名已存在"),
-    USERNAME_OR_PASSWORD_ERROR(40002, "用户名或密码错误"),
-    USER_DISABLED(40003, "用户已被禁用"),
-    TOKEN_INVALID(40101, "Token 无效"),
-    TOKEN_EXPIRED(40102, "Token 已过期"),
-
-
+    // devops-release-service
     VERSION_NOT_FOUND(50001, "版本不存在"),
     VERSION_NO_EXISTS(50002, "该项目下版本号已存在"),
     VERSION_STATUS_INVALID(50003, "版本状态不合法"),
 
+    // devops-pipeline-service
     PIPELINE_NOT_FOUND(70001, "流水线不存在"),
     PIPELINE_DISABLED(700011, "流水线已禁用"),
     PIPELINE_STEP_EMPTY(70012, "流水线步骤为空"),
@@ -47,14 +48,19 @@ public enum ErrorCode {
     PIPELINE_STEP_TYPE_INVALID(71005, "流水线步骤类型不合法"),
     PIPELINE_RUN_NOT_FOUND(72006, "流水线运行记录不存在"),
     PIPELINE_RUN_STATUS_INVALID(72007, "流水线运行状态不合法"),
-
     PIPELINE_RUN_ENV_INVALID(73010, "流水线环境不合法"),
     PIPELINE_STEP_ORDER_EXISTS(73020,"流水线步骤顺序已存在"),
 
+    // devops-runner-service
     RUNNER_NOT_FOUND(74001, "Runner 不存在"),
     RUNNER_TOKEN_INVALID(74002, "Runner Token无效"),
     RUNNER_DISABLED(74003, "Runner已禁用"),
-    RUNNER_STATUS_INVALID(74004, "Runner状态不合法");
+    RUNNER_STATUS_INVALID(74004, "Runner状态不合法"),
+
+    CREDENTIAL_NOT_FOUND(75001, "凭据不存在"),
+    CREDENTIAL_TYPE_INVALID(75002, "凭据类型不合法"),
+    CREDENTIAL_NAME_EXISTS(75003, "凭据名称已存在"),
+    CREDENTIAL_SECRET_REQUIRED(75004, "凭据密钥不能为空");
 
 
     private final Integer code;

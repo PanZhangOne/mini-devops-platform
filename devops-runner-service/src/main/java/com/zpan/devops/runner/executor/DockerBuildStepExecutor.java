@@ -64,7 +64,7 @@ public class DockerBuildStepExecutor {
         }
 
         StringBuilder commandBuilder = new StringBuilder();
-        commandBuilder.append("docker-build ");
+        commandBuilder.append("docker build ");
         commandBuilder.append("-t ").append(shellQuote(imageTag)).append(" ");
         commandBuilder.append("-f ").append(shellQuote(dockerfile)).append(" ");
         if (config.getBuildArgs() != null && !config.getBuildArgs().isEmpty()) {

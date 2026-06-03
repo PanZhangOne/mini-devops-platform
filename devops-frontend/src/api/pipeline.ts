@@ -1,5 +1,8 @@
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from './client'
 import type {
+  Credential,
+  CredentialCreateRequest,
+  CredentialUpdateRequest,
   PipelineDefinition,
   PipelineDefinitionCreateRequest,
   PipelineDefinitionUpdateRequest,
@@ -48,4 +51,12 @@ export const pipelineApi = {
   listRunners: () => apiGet<RunnerRecord[]>(`${PIPELINE_BASE}/runners`),
   updateRunnerStatus: (id: number, data: RunnerStatusUpdatePayload) =>
     apiPatch<RunnerRecord>(`${PIPELINE_BASE}/runners/${id}/status`, data),
+
+  listCredentials: (projectId?: number) =>
+    apiGet<Credential[]>(`${PIPELINE_BASE}/credentials`, projectId ? { projectId } : undefined),
+  createCredential: (data: CredentialCreateRequest) =>
+    apiPost<Credential>(`${PIPELINE_BASE}/credentials`, data),
+  updateCredential: (id: number, data: CredentialUpdateRequest) =>
+    apiPut<Credential>(`${PIPELINE_BASE}/credentials/${id}`, data),
+  removeCredential: (id: number) => apiDelete(`${PIPELINE_BASE}/credentials/${id}`),
 }

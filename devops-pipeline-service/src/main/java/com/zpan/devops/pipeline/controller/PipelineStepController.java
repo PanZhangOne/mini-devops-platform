@@ -19,7 +19,7 @@ public class PipelineStepController {
     @PostMapping("/pipelines/{pipelineId}/steps")
     public Result<PipelineStepVO> create(
             @PathVariable("pipelineId") Long pipelineId,
-            PipelineStepCreateRequest request
+            @Valid @RequestBody PipelineStepCreateRequest request
     ) {
         return Result.success(pipelineStepService.create(pipelineId, request));
     }

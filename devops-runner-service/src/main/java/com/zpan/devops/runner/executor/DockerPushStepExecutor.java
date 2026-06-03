@@ -1,10 +1,9 @@
 package com.zpan.devops.runner.executor;
 
+import com.zpan.devops.common.response.Result;
+import com.zpan.devops.runner.client.PipelineRunnerClient;
 import com.zpan.devops.runner.config.RunnerProperties;
-import com.zpan.devops.runner.model.ExecuteResult;
-import com.zpan.devops.runner.model.LogConsumer;
-import com.zpan.devops.runner.model.PipelineStepRunVO;
-import com.zpan.devops.runner.model.RunnerTaskVO;
+import com.zpan.devops.runner.model.*;
 import com.zpan.devops.runner.model.step.DockerPushStepConfig;
 import com.zpan.devops.runner.util.StepConfigParser;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,11 @@ public class DockerPushStepExecutor {
 
     private final StepConfigParser stepConfigParser;
 
+    private final DockerLoginExecutor dockerLoginExecutor;
+
     private final CommandProcessExecutor commandProcessExecutor;
+
+    private final PipelineRunnerClient pipelineRunnerClient;
 
     public ExecuteResult execute(RunnerTaskVO task, PipelineStepRunVO stepRun, Path workspaceDir, LogConsumer logConsumer) {
         DockerPushStepConfig config;
@@ -39,29 +42,33 @@ public class DockerPushStepExecutor {
             return ExecuteResult.failed(-2, "镜像标签不能为空");
         }
 
-        String registry = runnerProperties.getHarborRegistry();
-        String username = runnerProperties.getHarborUsername();
-        String password = runnerProperties.getHarborPassword();
+        Long credentialId = config.getCredentialId();
+        if (credentialId == null || credentialId <= 0) {
+            return ExecuteResult.failed(-3, "凭证ID不能为空");
+        }
 
+        String registry = runnerProperties.getHarborRegistry();
         if (registry == null || registry.isBlank()) {
             return ExecuteResult.failed(-1, "镜像仓库地址不能为空");
         }
-        if (username == null || username.isBlank()) {
-            return ExecuteResult.failed(-1, "镜像仓库用户名不能为空");
+        CredentialSecretVO credential = fetchCredentialSecret(credentialId);
+        if (!"USERNAME_PASSWORD".equals(credential.getCredentialType())) {
+            return ExecuteResult.failed(-1, "凭证类型必须是USERNAME_PASSWORD");
         }
-        if (password == null || password.isBlank()) {
-            return ExecuteResult.failed(-1, "镜像仓库密码不能为空");
+        if (credential.getUsername() == null || credential.getUsername().isBlank()) {
+            return ExecuteResult.failed(-1, "Harbor 用户名不能为空");
+        }
+        if (credential.getSecretValue() == null || credential.getSecretValue().isBlank()) {
+            return ExecuteResult.failed(-1, "Harbor 密码不能为空");
         }
 
-        String loginCommand = "echo " + shellQuote(password)
-                + " | docker login " + shellQuote(registry)
-                + " -u " + shellQuote(username)
-                + " --password-stdin";
 
-        ExecuteResult loginResult = commandProcessExecutor.execute(
-                loginCommand,
+        ExecuteResult loginResult = dockerLoginExecutor.login(
+                registry,
+                credential.getUsername(),
+                credential.getSecretValue(),
                 workspaceDir,
-                logConsumer
+                logConsumer::accept
         );
 
         if (!loginResult.isSuccess()) {
@@ -76,6 +83,16 @@ public class DockerPushStepExecutor {
         );
 
         return ExecuteResult.of(pushResult.isSuccess(), pushResult.getExitCode(), pushResult.getErrorMessage());
+    }
+
+    private CredentialSecretVO fetchCredentialSecret(Long credentialId) {
+        Result<CredentialSecretVO> result = pipelineRunnerClient.getCredentialSecret(credentialId);
+
+        if (result == null || result.getCode() == null || result.getCode() != 0) {
+            String message = result == null ? "获取凭据失败" : result.getMessage();
+            throw new IllegalStateException(message);
+        }
+        return result.getData();
     }
 
     private String shellQuote(String value) {

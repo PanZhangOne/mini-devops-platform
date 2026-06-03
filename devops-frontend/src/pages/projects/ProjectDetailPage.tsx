@@ -2,14 +2,15 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as Tabs from '@radix-ui/react-tabs'
-import { ArrowLeft, Trash2, Plus, Flag } from 'lucide-react'
+import { ArrowLeft, Trash2, Plus, Flag, KeyRound } from 'lucide-react'
 import { projectsApi, tasksApi } from '@/api/work'
 import { reposApi } from '@/api/code'
+import { pipelineApi } from '@/api/pipeline'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import type { Task, TaskCreateRequest, TaskPriority, TaskStatus } from '@/types'
+import type { Credential, CredentialCreateRequest, CredentialUpdateRequest, Task, TaskCreateRequest, TaskPriority, TaskStatus } from '@/types'
 
 const PRIORITY_STYLES: Record<TaskPriority, string> = {
   LOW: 'bg-gray-100 text-gray-600',
@@ -293,6 +294,255 @@ function RepoTab({ projectId }: { projectId: number }) {
   )
 }
 
+const CREDENTIAL_TYPE_STYLES: Record<string, string> = {
+  USERNAME_PASSWORD: 'bg-blue-50 text-blue-700',
+  TOKEN: 'bg-purple-50 text-purple-700',
+}
+
+function CredentialsTab({ projectId }: { projectId: number }) {
+  const qc = useQueryClient()
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<Credential | null>(null)
+
+  const emptyCreate = (): CredentialCreateRequest => ({
+    projectId,
+    name: '',
+    credentialType: 'TOKEN',
+    username: '',
+    secretValue: '',
+    description: '',
+  })
+  const [createForm, setCreateForm] = useState<CredentialCreateRequest>(emptyCreate)
+  const [editForm, setEditForm] = useState<CredentialUpdateRequest>({
+    name: '',
+    credentialType: 'TOKEN',
+    username: '',
+    secretValue: '',
+    description: '',
+  })
+
+  const { data: credentials = [] } = useQuery({
+    queryKey: ['credentials', projectId],
+    queryFn: () => pipelineApi.listCredentials(projectId),
+    select: (d) => d ?? [],
+  })
+
+  const createCred = useMutation({
+    mutationFn: (data: CredentialCreateRequest) => pipelineApi.createCredential(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['credentials', projectId] })
+      setCreateOpen(false)
+      setCreateForm(emptyCreate())
+    },
+  })
+
+  const updateCred = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: CredentialUpdateRequest }) =>
+      pipelineApi.updateCredential(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['credentials', projectId] })
+      setEditTarget(null)
+    },
+  })
+
+  const deleteCred = useMutation({
+    mutationFn: (id: number) => pipelineApi.removeCredential(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['credentials', projectId] })
+    },
+  })
+
+  const CREDENTIAL_TYPE_OPTIONS = [
+    { value: 'TOKEN', label: 'Token' },
+    { value: 'USERNAME_PASSWORD', label: '用户名密码' },
+  ]
+
+  return (
+    <div>
+      <div className="flex justify-end mb-4">
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus size={14} />
+              Add Credential
+            </Button>
+          </DialogTrigger>
+          <DialogContent title="Add Credential">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                createCred.mutate(createForm)
+              }}
+              className="space-y-4"
+            >
+              <Input
+                label="Name"
+                value={createForm.name}
+                onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
+                required
+              />
+              <Select
+                label="Type"
+                value={createForm.credentialType}
+                onChange={(e) =>
+                  setCreateForm((f) => ({
+                    ...f,
+                    credentialType: e.target.value as CredentialCreateRequest['credentialType'],
+                  }))
+                }
+                options={CREDENTIAL_TYPE_OPTIONS}
+              />
+              {createForm.credentialType === 'USERNAME_PASSWORD' && (
+                <Input
+                  label="Username"
+                  value={createForm.username ?? ''}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, username: e.target.value }))}
+                />
+              )}
+              <Input
+                label="Secret / Token"
+                type="password"
+                value={createForm.secretValue}
+                onChange={(e) => setCreateForm((f) => ({ ...f, secretValue: e.target.value }))}
+                required
+              />
+              <Input
+                label="Description"
+                value={createForm.description ?? ''}
+                onChange={(e) => setCreateForm((f) => ({ ...f, description: e.target.value }))}
+              />
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="secondary" type="button" onClick={() => setCreateOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" loading={createCred.isPending}>
+                  Add
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Dialog open={editTarget !== null} onOpenChange={(open) => { if (!open) setEditTarget(null) }}>
+        <DialogContent title="Edit Credential">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (editTarget) updateCred.mutate({ id: editTarget.id, data: editForm })
+            }}
+            className="space-y-4"
+          >
+            <Input
+              label="Name"
+              value={editForm.name}
+              onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+              required
+            />
+            <Select
+              label="Type"
+              value={editForm.credentialType}
+              onChange={(e) =>
+                setEditForm((f) => ({
+                  ...f,
+                  credentialType: e.target.value as CredentialUpdateRequest['credentialType'],
+                }))
+              }
+              options={CREDENTIAL_TYPE_OPTIONS}
+            />
+            {editForm.credentialType === 'USERNAME_PASSWORD' && (
+              <Input
+                label="Username"
+                value={editForm.username ?? ''}
+                onChange={(e) => setEditForm((f) => ({ ...f, username: e.target.value }))}
+              />
+            )}
+            <Input
+              label="New Secret / Token"
+              type="password"
+              value={editForm.secretValue ?? ''}
+              onChange={(e) => setEditForm((f) => ({ ...f, secretValue: e.target.value }))}
+              placeholder="Leave blank to keep unchanged"
+            />
+            <Input
+              label="Description"
+              value={editForm.description ?? ''}
+              onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="secondary" type="button" onClick={() => setEditTarget(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={updateCred.isPending}>
+                Save
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {credentials.length === 0 ? (
+        <p className="text-sm text-center text-[var(--color-text-subtle)] py-12">No credentials added yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {credentials.map((cred) => (
+            <div
+              key={cred.id}
+              className="bg-[var(--color-surface-2)] rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <KeyRound size={16} className="text-[var(--color-text-muted)] shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text)]">{cred.name}</p>
+                  {cred.description && (
+                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{cred.description}</p>
+                  )}
+                  {cred.username && (
+                    <p className="text-xs text-[var(--color-text-subtle)] mt-0.5 font-mono">{cred.username}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${CREDENTIAL_TYPE_STYLES[cred.credentialType] ?? 'bg-gray-100 text-gray-700'}`}
+                >
+                  {cred.credentialTypeDescription || cred.credentialType}
+                </span>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    setEditForm({
+                      name: cred.name,
+                      credentialType: cred.credentialType,
+                      username: cred.username ?? '',
+                      secretValue: '',
+                      description: cred.description ?? '',
+                    })
+                    setEditTarget(cred)
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => {
+                    if (confirm(`Delete credential "${cred.name}"?`)) deleteCred.mutate(cred.id)
+                  }}
+                  loading={deleteCred.isPending}
+                >
+                  <Trash2 size={12} />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -393,6 +643,7 @@ export function ProjectDetailPage() {
           {[
             { value: 'tasks', label: 'Tasks' },
             { value: 'repos', label: 'Repositories' },
+            { value: 'credentials', label: 'Credentials' },
           ].map(({ value, label }) => (
             <Tabs.Trigger
               key={value}
@@ -408,6 +659,9 @@ export function ProjectDetailPage() {
         </Tabs.Content>
         <Tabs.Content value="repos">
           <RepoTab projectId={projectId} />
+        </Tabs.Content>
+        <Tabs.Content value="credentials">
+          <CredentialsTab projectId={projectId} />
         </Tabs.Content>
       </Tabs.Root>
     </div>

@@ -1,21 +1,27 @@
 package com.zpan.devops.work.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.zpan.devops.common.config.IdGeneratorConfig;
 import com.zpan.devops.common.exception.BizException;
 import com.zpan.devops.common.exception.ErrorCode;
+import com.zpan.devops.common.util.SnowflakeIdWorker;
+import com.zpan.devops.work.domain.TaskStatusTransition;
 import com.zpan.devops.work.entity.Task;
+import com.zpan.devops.work.enums.TaskActivityType;
 import com.zpan.devops.work.enums.TaskPriority;
 import com.zpan.devops.work.enums.TaskStatus;
 import com.zpan.devops.work.mapper.TaskMapper;
-import com.zpan.devops.work.model.request.TaskCreateRequest;
-import com.zpan.devops.work.model.request.TaskStatusUpdateRequest;
-import com.zpan.devops.work.model.request.TaskUpdateRequest;
+import com.zpan.devops.work.model.request.*;
 import com.zpan.devops.work.model.vo.ProjectTaskStatsVO;
 import com.zpan.devops.work.model.vo.TaskVO;
 import com.zpan.devops.work.service.ProjectService;
+import com.zpan.devops.work.service.TaskActivityService;
 import com.zpan.devops.work.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.HandlerMapping;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +35,13 @@ public class TaskServiceImpl implements TaskService {
 
     private final ProjectService projectService;
 
+    private final TaskActivityService taskActivityService;
+
+    private final SnowflakeIdWorker snowflakeIdWorker;
+
+    private final TaskStatusTransition taskStatusTransition;
+    private final HandlerMapping resourceHandlerMapping;
+
     @Override
     public TaskVO create(TaskCreateRequest request) {
         projectService.checkProjectExist(request.getProjectId());
@@ -40,11 +53,21 @@ public class TaskServiceImpl implements TaskService {
 
         Task task = new Task();
         task.setProjectId(request.getProjectId());
+        task.setTaskNo(String.valueOf(snowflakeIdWorker.nextId()));
         task.setTitle(request.getTitle());
+        task.setParentTaskId(request.getParentId());
+        task.setModuleId(request.getModuleId());
+        task.setTaskType(request.getTaskType());
         task.setDescription(request.getDescription());
         task.setAssigneeId(request.getAssigneeId());
         task.setStatus(TaskStatus.TODO.name());
         task.setPriority(request.getPriority());
+        task.setDeadline(request.getDeadline());
+        task.setActualHours(request.getActualHours());
+        task.setEstimatedHours(request.getEstimatedHours());
+        task.setAssigneeId(request.getAssigneeId());
+        task.setReporterId(request.getReporterId());
+        task.setSortOrder(request.getSortOrder());
         task.setDeadline(request.getDeadline());
         task.setCreatedAt(now);
         task.setUpdatedAt(now);
@@ -73,6 +96,54 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public Page<TaskVO> listByProjectId(Long projectId, TaskListRequest request) {
+        var exists = existsByProjectId(projectId);
+        if (!exists) {
+            throw new BizException(ErrorCode.PROJECT_NOT_FOUND);
+        }
+
+        int pageNO = request.getPageNo();
+        int pageSize = request.getPageSize();
+        pageSize = Math.min(pageNO, 100);
+
+        LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Task::getProjectId, projectId);
+
+        if (request.getModuleId() != null) {
+            wrapper.eq(Task::getModuleId, request.getModuleId());
+        }
+        if (request.getParentTaskId() != null) {
+            wrapper.eq(Task::getParentTaskId, request.getParentTaskId());
+        }
+        if (request.getStatus() != null) {
+            wrapper.eq(Task::getStatus, request.getStatus());
+        }
+        if (request.getTaskType() != null) {
+            wrapper.eq(Task::getTaskType, request.getTaskType());
+        }
+        if (request.getPriority() != null) {
+            wrapper.eq(Task::getPriority, request.getPriority());
+        }
+        if (request.getAssigneeId() != null) {
+            wrapper.eq(Task::getAssigneeId, request.getAssigneeId());
+        }
+        if (request.getKeyword() != null) {
+            wrapper.and(w ->
+                    w.like(Task::getTitle, request.getKeyword())
+                            .or().like(Task::getTaskNo, request.getKeyword()));
+        }
+
+        wrapper.orderByAsc(Task::getSortOrder);
+        wrapper.orderByDesc(Task::getCreatedAt);
+
+        Page<Task> taskPage = taskMapper.selectPage(new Page<>(pageNO, pageSize), wrapper);
+        Page<TaskVO> voPage = new Page<>(taskPage.getCurrent(), taskPage.getSize(), taskPage.getTotal());
+        voPage.setRecords(taskPage.getRecords().stream().map(this::toVO).toList());
+
+        return voPage;
+    }
+
+    @Override
     public TaskVO getById(Long id) {
         Task task = getTaskOrThrow(id);
         return toVO(task);
@@ -91,11 +162,19 @@ public class TaskServiceImpl implements TaskService {
         }
 
         task.setProjectId(request.getProjectId());
+        task.setModuleId(request.getModuleId());
+        task.setParentTaskId(request.getParentTaskId());
+        task.setTaskType(request.getTaskType());
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
         task.setAssigneeId(request.getAssigneeId());
-        task.setStatus(request.getStatus());
+        task.setReporterId(request.getReporterId());
         task.setPriority(request.getPriority());
+        task.setEstimatedHours(request.getEstimatedHours());
+        task.setActualHours(request.getActualHours());
+        task.setSortOrder(request.getSortOrder());
+
+        task.setDeadline(request.getDeadline());
         task.setDeadline(request.getDeadline());
         task.setUpdatedAt(LocalDateTime.now());
 
@@ -120,6 +199,40 @@ public class TaskServiceImpl implements TaskService {
     public void delete(Long id) {
         Task task = getTaskOrThrow(id);
         taskMapper.deleteById(task);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changeStatus(Long id, TaskStatusChangeRequest request) {
+        Task task = getTaskOrThrow(id);
+
+        var canTransit = taskStatusTransition.canTransit(task.getStatus(), request.getTargetStatus());
+        if (!canTransit) {
+            throw new BizException(ErrorCode.TASK_STATUS_TRANSITION_INVALID);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        String oldStatus = task.getStatus();
+
+        task.setStatus(request.getTargetStatus());
+
+        if (TaskStatus.IN_PROGRESS.name().equals(request.getTargetStatus()) && task.getStartedAt() == null) {
+            task.setStartedAt(now);
+        }
+        if (TaskStatus.DONE.name().equals(request.getTargetStatus()) || TaskStatus.CANCELLED.name().equals(request.getTargetStatus())) {
+            task.setFinishedAt(now);
+        }
+        if (TaskStatus.IN_PROGRESS.name().equals(request.getTargetStatus())) {
+            task.setFinishedAt(null);
+        }
+
+
+        task.setUpdatedAt(now);
+
+        // 更新数据
+        taskMapper.updateById(task);
+        // 写入日志
+        appendStatusChangeActivity(task, oldStatus, request.getTargetStatus(), request.getRemark(), request.getUserId(), now);
     }
 
     @Override
@@ -199,5 +312,38 @@ public class TaskServiceImpl implements TaskService {
             throw new BizException(ErrorCode.TASK_NOT_FOUND);
         }
         return task;
+    }
+
+    private void appendStatusChangeActivity(
+            Task task,
+            String oldStatus,
+            String newStatus,
+            String remark,
+            Long currentUserId,
+            LocalDateTime now
+    ) {
+        String oldDescription = TaskStatus.valueOf(oldStatus).getDescription();
+        String newDescription = TaskStatus.valueOf(newStatus).getDescription();
+
+        StringBuilder contentBuilder = new StringBuilder();
+        contentBuilder
+                .append("任务状态从 ").append(oldDescription)
+                .append(" 变更为 ")
+                .append(newDescription);
+
+        if (remark != null && !remark.isBlank()) {
+            contentBuilder.append(", 备注: ").append(remark);
+        }
+
+        TaskActivityCreateRequest request = new TaskActivityCreateRequest();
+        request.setTaskId(task.getId());
+        request.setActionType(TaskActivityType.CHANGE_STATUS.name());
+        request.setActionContent(contentBuilder.toString());
+        request.setOldValue(oldStatus);
+        request.setNewValue(newStatus);
+        request.setCreatedBy(currentUserId);
+        request.setCreatedAt(now);
+
+        taskActivityService.create(request);
     }
 }

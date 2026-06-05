@@ -1,7 +1,9 @@
 package com.zpan.devops.work.model.vo;
 
 import lombok.Data;
+import org.springframework.cglib.core.Local;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -10,11 +12,19 @@ public class TaskVO {
 
     private Long projectId;
 
+    private Long moduleId;
+
+    private Long parentTaskId;
+
+    private String taskNo;
+
     private String title;
 
     private String description;
 
-    private Long assigneeId;
+    private String taskType;
+
+    private String taskTypeDescription;
 
     private String status;
 
@@ -24,7 +34,23 @@ public class TaskVO {
 
     private String priorityDescription;
 
+    private Long assigneeId;
+
+    private Long reporterId;
+
+    private String reporterName;
+
     private LocalDateTime deadline;
+
+    private LocalDateTime startedAt;
+
+    private LocalDateTime finishedAt;
+
+    private BigDecimal estimatedHours;
+
+    private BigDecimal actualHours;
+
+    private Integer sortOrder;
 
     private LocalDateTime createdAt;
 

@@ -5,7 +5,11 @@ import lombok.Getter;
 @Getter
 public enum TaskStatus {
 
-    TODO("待处理"), IN_PROGRESS("进行中"), TESTING("测试中"), DONE("已完成"), CANCELLED("已取消");
+    TODO("待处理"),
+    IN_PROGRESS("进行中"),
+    TESTING("测试中"),
+    DONE("已完成"),
+    CANCELLED("已取消");
 
     private final String description;
 

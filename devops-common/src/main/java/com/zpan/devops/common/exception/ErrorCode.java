@@ -28,6 +28,11 @@ public enum ErrorCode {
     PROJECT_HAS_TASKS(30003, "项目中存在任务"),
     TASK_NOT_FOUND(30004, "任务不存在"),
     TASK_STATUS_INVALID(30005, "任务状态不合法"),
+    PROJECT_MODULE_PARENT_INVALID(30006, "父模块不合法"),
+    PROJECT_MODULE_HAS_CHILDREN(30007, "模块下存在子模块"),
+    PROJECT_MODULE_HAS_TASKS(30008, "模块下存在任务"),
+    PROJECT_MODULE_NOT_FOUND(30009, "模块不存在"),
+    TASK_STATUS_TRANSITION_INVALID(30010, "任务状态转换不合法"),
 
     // devops-code-service
     REPOSITORY_NOT_FOUND(40001, "代码仓库不存在"),

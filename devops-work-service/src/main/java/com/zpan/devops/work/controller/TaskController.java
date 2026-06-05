@@ -1,7 +1,9 @@
 package com.zpan.devops.work.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zpan.devops.common.response.Result;
 import com.zpan.devops.work.model.request.TaskCreateRequest;
+import com.zpan.devops.work.model.request.TaskListRequest;
 import com.zpan.devops.work.model.request.TaskStatusUpdateRequest;
 import com.zpan.devops.work.model.request.TaskUpdateRequest;
 import com.zpan.devops.work.model.vo.TaskVO;
@@ -29,6 +31,14 @@ public class TaskController {
         return Result.success(taskService.list());
     }
 
+    @GetMapping("/project/{project_Id}/tasks")
+    public Result<Page<TaskVO>> listByProjectId(
+            @PathVariable("project_Id") Long projectId,
+            TaskListRequest request
+    ) {
+        return Result.success(taskService.listByProjectId(projectId, request));
+    }
+
     @GetMapping("/{id}")
     public Result<TaskVO> getById(@PathVariable("id") Long id) {
         return Result.success(taskService.getById(id));
@@ -42,7 +52,7 @@ public class TaskController {
         return Result.success(taskService.update(id, request));
     }
 
-    @PatchMapping("/{id}/status")
+    @PostMapping("/{id}/status")
     public Result<TaskVO> updateStatus(
             @PathVariable("id") Long id,
             @Valid @RequestBody TaskStatusUpdateRequest request

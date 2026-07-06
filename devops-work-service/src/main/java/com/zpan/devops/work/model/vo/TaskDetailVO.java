@@ -19,4 +19,7 @@ public class TaskDetailVO extends TaskVO {
 
     // 活动日志
     private List<TaskActivityVO> activities = new ArrayList<>();
+
+    // 关系列表
+    private List<TaskRelationVO> relations = new ArrayList<>();
 }

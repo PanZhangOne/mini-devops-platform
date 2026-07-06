@@ -9,10 +9,7 @@ import com.zpan.devops.work.enums.TaskStatus;
 import com.zpan.devops.work.enums.TaskType;
 import com.zpan.devops.work.mapper.TaskMapper;
 import com.zpan.devops.work.model.vo.*;
-import com.zpan.devops.work.service.TaskActivityService;
-import com.zpan.devops.work.service.TaskCommentService;
-import com.zpan.devops.work.service.TaskDetailService;
-import com.zpan.devops.work.service.TaskPropertyValueService;
+import com.zpan.devops.work.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +27,8 @@ public class TaskDetailServiceImpl implements TaskDetailService {
 
     private final TaskActivityService taskActivityService;
 
+    private final TaskRelationService taskRelationService;
+
     @Override
     public TaskDetailVO getDetail(Long taskId) {
         Task task =  getTaskOrThrow(taskId);
@@ -38,6 +37,7 @@ public class TaskDetailServiceImpl implements TaskDetailService {
         detail.setPropertyValues(listPropertyValues(taskId));
         detail.setComments(listComments(taskId));
         detail.setActivities(listActivities(taskId));
+        detail.setRelations(taskRelationService.listByTaskId(taskId));
 
         return detail;
     }

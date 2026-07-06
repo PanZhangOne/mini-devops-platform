@@ -191,6 +191,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public Task getTask(Long id) {
+        return getTaskOrThrow(id);
+    }
+
+    @Override
     public TaskVO updateStatus(Long id, TaskStatusUpdateRequest request) {
         Task task = getTaskOrThrow(id);
         if (!TaskStatus.isValid(request.getStatus())) {

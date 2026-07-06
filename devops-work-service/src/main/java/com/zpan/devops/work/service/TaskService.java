@@ -1,6 +1,7 @@
 package com.zpan.devops.work.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.zpan.devops.work.entity.Task;
 import com.zpan.devops.work.model.request.*;
 import com.zpan.devops.work.model.vo.ProjectTaskStatsVO;
 import com.zpan.devops.work.model.vo.TaskVO;
@@ -21,6 +22,8 @@ public interface TaskService {
     TaskVO getById(Long id);
 
     TaskVO update(Long id, TaskUpdateRequest request);
+
+    Task getTask(Long id);
 
     /**
      *

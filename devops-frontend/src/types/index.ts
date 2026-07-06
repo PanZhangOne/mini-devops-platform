@@ -78,41 +78,205 @@ export interface ProjectTaskStatsVO {
 
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'TESTING' | 'DONE' | 'CANCELLED'
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+export type TaskType = 'REQUIREMENT' | 'TASK' | 'BUG' | 'STORY' | 'SUB_TASK'
+export type TaskPropertyType =
+  | 'TEXT'
+  | 'NUMBER'
+  | 'DATE'
+  | 'SELECT'
+  | 'MULTI_SELECT'
+  | 'USER'
+  | 'BOOLEAN'
 
 export interface Task {
   id: number
   projectId: number
+  moduleId: number | null
+  parentTaskId: number | null
+  taskNo: string
   title: string
   description: string
+  taskType: TaskType
+  taskTypeDescription: string
   assigneeId: number
+  reporterId: number
+  reporterName: string
   status: TaskStatus
   statusDescription: string
   priority: TaskPriority
   priorityDescription: string
-  deadline: string
+  dueDate: string | null
+  startedAt: string | null
+  finishedAt: string | null
+  estimatedHours: number | null
+  actualHours: number | null
+  sortOrder: number | null
   createdAt: string
   updatedAt: string
 }
 
 export interface TaskCreateRequest {
   projectId: number
+  moduleId?: number
+  parentId?: number
   title: string
+  taskType: TaskType
   description?: string
   assigneeId?: number
   priority: TaskPriority
-  deadline?: string
+  reporterId?: number
+  dueDate?: string
+  estimatedHours?: number
+  actualHours?: number
+  sortOrder?: number
 }
 
 export interface TaskUpdateRequest {
+  projectId: number
+  moduleId?: number
+  parentTaskId?: number
   title: string
+  taskType: TaskType
   description?: string
   assigneeId?: number
+  reporterId?: number
+  status: TaskStatus
   priority: TaskPriority
-  deadline?: string
+  dueDate?: string
+  estimatedHours?: number
+  actualHours?: number
+  sortOrder?: number
 }
 
-export interface TaskStatusUpdateRequest {
-  status: TaskStatus
+export interface TaskStatusChangeRequest {
+  targetStatus: TaskStatus
+  userId?: number
+  remark?: string
+}
+
+export interface TaskProperty {
+  id: number
+  projectId: number
+  name: string
+  code: string
+  propertyType: TaskPropertyType
+  propertyTypeDescription: string
+  required: boolean
+  optionsJson: string | null
+  sortOrder: number
+  enabled: boolean
+  createdBy: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TaskPropertyCreateRequest {
+  name: string
+  code: string
+  propertyType: TaskPropertyType
+  required?: boolean
+  optionsJson?: string
+  sortOrder?: number
+  enabled?: boolean
+}
+
+export interface TaskPropertyUpdateRequest extends TaskPropertyCreateRequest {}
+
+export interface TaskPropertyValue {
+  id: number | null
+  taskId: number
+  propertyId: number
+  propertyCode: string
+  propertyName: string
+  propertyType: TaskPropertyType
+  propertyTypeDescription: string
+  required: boolean
+  optionsJson: string | null
+  valueText: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+export interface TaskPropertyValueSaveItemRequest {
+  propertyId: number
+  valueText: string | null
+}
+
+export interface TaskPropertyValueSaveRequest {
+  values: TaskPropertyValueSaveItemRequest[]
+}
+
+export interface TaskComment {
+  id: number
+  taskId: number
+  parentId: number | null
+  content: string
+  createdBy: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TaskCommentTree extends TaskComment {
+  children: TaskCommentTree[]
+}
+
+export interface TaskCommentCreateRequest {
+  parentId?: number
+  content: string
+}
+
+export interface TaskActivity {
+  id: number
+  taskId: number
+  actionType: string
+  actionTypeDescription: string
+  actionContent: string
+  oldValue: string | null
+  oldValueDescription: string | null
+  newValue: string | null
+  newValueDescription: string | null
+  createdBy: number | null
+  createdAt: string
+}
+
+export interface TaskDetail extends Task {
+  children: Task[]
+  propertyValues: TaskPropertyValue[]
+  comments: TaskCommentTree[]
+  activities: TaskActivity[]
+}
+
+export interface ProjectModule {
+  id: number
+  projectId: number
+  parentId: number | null
+  name: string
+  code: string
+  description: string | null
+  sortOrder: number | null
+  createdBy: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ProjectModuleTree extends ProjectModule {
+  children: ProjectModuleTree[]
+}
+
+export interface ProjectModuleCreateRequest {
+  parentId: number
+  name: string
+  code: string
+  description?: string
+  sortOrder?: number
+}
+
+export interface ProjectModuleUpdateRequest {
+  parentId?: number
+  name: string
+  code: string
+  description?: string
+  sortOrder?: number
 }
 
 // ─── Repository ───────────────────────────────────────────────────────────────

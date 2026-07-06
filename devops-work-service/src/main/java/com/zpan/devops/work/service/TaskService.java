@@ -37,4 +37,6 @@ public interface TaskService {
     ProjectTaskStatsVO getProjectTaskStats(Long projectId);
 
     boolean existsByProjectId(Long projectId);
+
+    boolean existsById(Long id);
 }

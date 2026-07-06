@@ -40,7 +40,7 @@ public class TaskVO {
 
     private String reporterName;
 
-    private LocalDateTime deadline;
+    private LocalDateTime dueDate;
 
     private LocalDateTime startedAt;
 

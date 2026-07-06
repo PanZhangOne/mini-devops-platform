@@ -29,17 +29,19 @@ public class Task {
 
     private String description;
 
-    private Long assigneeId;
-
-    private Long reporterId;
-
     private String taskType;
 
     private String status;
 
     private String priority;
 
-    private LocalDateTime deadline;
+    private Long assigneeId;
+
+    private Long reporterId;
+
+    private Long createdBy;
+
+    private LocalDateTime dueDate;
 
     private LocalDateTime startedAt;
 

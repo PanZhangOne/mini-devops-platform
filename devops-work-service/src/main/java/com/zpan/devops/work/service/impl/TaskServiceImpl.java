@@ -11,10 +11,15 @@ import com.zpan.devops.work.entity.Task;
 import com.zpan.devops.work.enums.TaskActivityType;
 import com.zpan.devops.work.enums.TaskPriority;
 import com.zpan.devops.work.enums.TaskStatus;
+import com.zpan.devops.work.event.TaskEvent;
+import com.zpan.devops.work.event.TaskEventFactory;
+import com.zpan.devops.work.event.TaskEventProducer;
+import com.zpan.devops.work.event.TaskEventType;
 import com.zpan.devops.work.mapper.TaskMapper;
 import com.zpan.devops.work.model.request.*;
 import com.zpan.devops.work.model.vo.ProjectTaskStatsVO;
 import com.zpan.devops.work.model.vo.TaskVO;
+import com.zpan.devops.work.service.EventMessageService;
 import com.zpan.devops.work.service.ProjectService;
 import com.zpan.devops.work.service.TaskActivityService;
 import com.zpan.devops.work.service.TaskService;
@@ -40,7 +45,12 @@ public class TaskServiceImpl implements TaskService {
     private final SnowflakeIdWorker snowflakeIdWorker;
 
     private final TaskStatusTransition taskStatusTransition;
-    private final HandlerMapping resourceHandlerMapping;
+
+    private final TaskEventFactory taskEventFactory;
+
+    private final TaskEventProducer taskEventProducer;
+
+    private final EventMessageService eventMessageService;
 
     @Override
     public TaskVO create(TaskCreateRequest request) {
@@ -62,13 +72,12 @@ public class TaskServiceImpl implements TaskService {
         task.setAssigneeId(request.getAssigneeId());
         task.setStatus(TaskStatus.TODO.name());
         task.setPriority(request.getPriority());
-        task.setDeadline(request.getDeadline());
+        task.setDueDate(request.getDueDate());
         task.setActualHours(request.getActualHours());
         task.setEstimatedHours(request.getEstimatedHours());
         task.setAssigneeId(request.getAssigneeId());
         task.setReporterId(request.getReporterId());
         task.setSortOrder(request.getSortOrder());
-        task.setDeadline(request.getDeadline());
         task.setCreatedAt(now);
         task.setUpdatedAt(now);
 
@@ -174,8 +183,7 @@ public class TaskServiceImpl implements TaskService {
         task.setActualHours(request.getActualHours());
         task.setSortOrder(request.getSortOrder());
 
-        task.setDeadline(request.getDeadline());
-        task.setDeadline(request.getDeadline());
+        task.setDueDate(request.getDueDate());
         task.setUpdatedAt(LocalDateTime.now());
 
         taskMapper.updateById(task);
@@ -185,7 +193,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskVO updateStatus(Long id, TaskStatusUpdateRequest request) {
         Task task = getTaskOrThrow(id);
-        if (TaskStatus.isValid(request.getStatus())) {
+        if (!TaskStatus.isValid(request.getStatus())) {
             throw new BizException(ErrorCode.TASK_STATUS_INVALID);
         }
 
@@ -233,6 +241,10 @@ public class TaskServiceImpl implements TaskService {
         taskMapper.updateById(task);
         // 写入日志
         appendStatusChangeActivity(task, oldStatus, request.getTargetStatus(), request.getRemark(), request.getUserId(), now);
+
+        // 增加消息队列
+        TaskEvent event = taskEventFactory.statusChanged(task, oldStatus, request.getTargetStatus(), request.getRemark(), request.getUserId());
+        eventMessageService.saveTaskEvent(event);
     }
 
     @Override
@@ -273,6 +285,13 @@ public class TaskServiceImpl implements TaskService {
         return taskMapper.selectCount(wrapper) > 0;
     }
 
+    @Override
+    public boolean existsById(Long id) {
+        LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Task::getId, id);
+        return taskMapper.selectCount(wrapper) > 0;
+    }
+
     private long countByStatus(Long projectId, String status) {
         LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Task::getProjectId, projectId);
@@ -291,7 +310,7 @@ public class TaskServiceImpl implements TaskService {
         vo.setAssigneeId(task.getAssigneeId());
         vo.setStatus(task.getStatus());
         vo.setPriority(task.getPriority());
-        vo.setDeadline(task.getDeadline());
+        vo.setDueDate(task.getDueDate());
         vo.setCreatedAt(task.getCreatedAt());
         vo.setUpdatedAt(task.getUpdatedAt());
 

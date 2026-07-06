@@ -14,13 +14,23 @@ public enum TaskActivityType {
     LINK_BRANCH("关联分支"),
     LINK_COMMIT("关联提交"),
     LINK_MERGE_REQUEST("关联合并请求"),
-    LINK_PIPELINE_RUN("关联流水线运行");
+    LINK_PIPELINE_RUN("关联流水线运行"),
+    LINK_VERSION("关联版本"),
+    LINK_RELEASE("关联发布"),
+    UNLINK_RELATION("取消关联对象");
 
     private final String description;
 
     TaskActivityType(String description) {
-
         this.description = description;
+    }
 
+    public  static boolean isValid(String value) {
+        for (TaskActivityType type : values()) {
+            if (type.name().equals(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

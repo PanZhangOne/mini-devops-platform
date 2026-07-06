@@ -35,7 +35,7 @@ public class TaskUpdateRequest {
     @NotBlank(message = "任务优先级不能为空")
     private String priority;
 
-    private LocalDateTime deadline;
+    private LocalDateTime dueDate;
 
     @DecimalMin(value = "0.0", message = "估计工时不能小于0")
     private BigDecimal estimatedHours;

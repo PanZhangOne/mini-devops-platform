@@ -33,11 +33,11 @@ public class TaskCreateRequest {
 
     private Long reporterId;
 
-    private LocalDateTime deadline;
+    private LocalDateTime dueDate;
 
     private BigDecimal estimatedHours;
 
     private BigDecimal actualHours;
 
-    private Integer sortOrder;
+    private Integer sortOrder = 0;
 }

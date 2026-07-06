@@ -34,6 +34,20 @@ public enum ErrorCode {
     PROJECT_MODULE_NOT_FOUND(30009, "模块不存在"),
     TASK_STATUS_TRANSITION_INVALID(30010, "任务状态转换不合法"),
 
+    TASK_PROPERTY_NOT_FOUND(33001, "任务属性不存在"),
+    TASK_PROPERTY_CODE_EXISTS(33002, "任务属性编码已存在"),
+    TASK_PROPERTY_TYPE_INVALID(33003, "任务属性类型不合法"),
+    TASK_PROPERTY_VALUE_INVALID(33004, "任务属性值不合法"),
+    TASK_PROPERTY_REQUIRED(33005, "任务属性为必填项"),
+    TASK_PROPERTY_DISABLED(33006, "任务属性已禁用"),
+
+    TASK_COMMENT_NOT_FOUND(34001, "任务评论不存在"),
+    TASK_COMMENT_PARENT_INVALID(34002, "父评论不合法"),
+
+    TASK_RELATION_NOT_FOUND(35001, "任务关联对象不存在"),
+    TASK_RELATION_TYPE_INVALID(35002, "任务关联类型不合法"),
+    TASK_RELATION_EXISTS(35003, "任务关联对象已存在"),
+
     // devops-code-service
     REPOSITORY_NOT_FOUND(40001, "代码仓库不存在"),
     REPOSITORY_URL_EXISTS(40002, "该项目下代码仓库地址已存在"),

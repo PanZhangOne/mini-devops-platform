@@ -40,6 +40,7 @@
         <postgresql.version>42.7.4</postgresql.version>
         <flyway.version>10.20.1</flyway.version>
         <jjwt.version>0.12.6</jjwt.version>
+        <rocketmq.spring.version>2.3.1</rocketmq.spring.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -134,6 +135,12 @@
                 <groupId>io.jsonwebtoken</groupId>
                 <artifactId>jjwt-jackson</artifactId>
                 <version>${jjwt.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-spring-boot-starter</artifactId>
+                <version>${rocketmq.spring.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

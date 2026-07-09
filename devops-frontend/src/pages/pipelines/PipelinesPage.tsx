@@ -194,7 +194,7 @@ export function PipelineFormDialog({
     mode: 'create' | 'edit'
     pipeline: PipelineDefinition | null
     projects: { id: number; name: string }[]
-    repositories: { id: number; projectId: number; repoName: string }[]
+    repositories: { id: number; projectId: number; name: string }[]
     onCreated?: (pipeline: PipelineDefinition) => void
 }) {
     const qc = useQueryClient()
@@ -315,7 +315,7 @@ export function PipelineFormDialog({
                             onChange={(event) => setForm((current) => ({...current, repositoryId: event.target.value}))}
                             options={[
                                 {value: '', label: '选择仓库'},
-                                ...filteredRepos.map((repo) => ({value: String(repo.id), label: repo.repoName})),
+                                ...filteredRepos.map((repo) => ({value: String(repo.id), label: repo.name})),
                             ]}
                         />
                     </div>
@@ -855,7 +855,7 @@ export function PipelinesPage() {
     }, [runs])
 
     const projectMap = useMemo(() => new Map(projects.map((project) => [project.id, project.name])), [projects])
-    const repoMap = useMemo(() => new Map(repositories.map((repo) => [repo.id, repo.repoName])), [repositories])
+    const repoMap = useMemo(() => new Map(repositories.map((repo) => [repo.id, repo.name])), [repositories])
 
     const recentRuns = useMemo(
         () => runs.filter((run) => run.pipelineId === selectedPipelineId).slice(0, 5),

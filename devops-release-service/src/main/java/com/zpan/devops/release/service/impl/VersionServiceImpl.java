@@ -131,7 +131,7 @@ public class VersionServiceImpl implements VersionService {
     private void checkRepositoryExists(Long repositoryId) {
         Result<Boolean> result = codeRepositoryClient.existsById(repositoryId);
         if (!result.getData()) {
-            throw new BizException(ErrorCode.REPOSITORY_NOT_FOUND);
+            throw new BizException(ErrorCode.CODE_REPOSITORY_NOT_FOUND);
         }
     }
 

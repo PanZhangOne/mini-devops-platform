@@ -1,36 +1,47 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useQuery as useProjectsQuery } from '@tanstack/react-query'
-import { Plus, Code2, ExternalLink, Trash2 } from 'lucide-react'
+import { Plus, Code2, ExternalLink, Pencil, Trash2 } from 'lucide-react'
 import { reposApi } from '@/api/code'
 import { projectsApi } from '@/api/work'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/Dialog'
-import type { RepositoryCreateRequest, RepoType } from '@/types'
+import type { Repository, RepositoryCreateRequest, RepositoryUpdateRequest, RepositoryVisibility } from '@/types'
 
-const REPO_TYPE_STYLES: Record<string, string> = {
-  GITHUB: 'bg-gray-100 text-gray-700',
-  GITLAB: 'bg-orange-50 text-orange-700',
-  GITEE: 'bg-red-50 text-red-700',
-  CUSTOM: 'bg-purple-50 text-purple-700',
+const VISIBILITY_STYLES: Record<string, string> = {
+  PRIVATE: 'bg-gray-100 text-gray-700',
+  PUBLIC: 'bg-emerald-50 text-emerald-700',
+  INTERNAL: 'bg-blue-50 text-blue-700',
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  ACTIVE: 'bg-emerald-50 text-emerald-700',
+  ARCHIVED: 'bg-amber-50 text-amber-700',
+  DISABLED: 'bg-gray-100 text-gray-700',
 }
 
 const defaultForm: Omit<RepositoryCreateRequest, 'projectId'> & { projectId: string } = {
   projectId: '',
-  repoName: '',
-  repoUrl: '',
-  defaultBranch: 'main',
-  repoType: 'GITHUB',
+  namespace: '',
+  name: '',
+  path: '',
+  visibility: 'PUBLIC',
   description: '',
 }
 
 export function RepositoriesPage() {
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<Repository | null>(null)
   const [filter, setFilter] = useState('')
   const [form, setForm] = useState(defaultForm)
+  const [editForm, setEditForm] = useState<RepositoryUpdateRequest>({
+    name: '',
+    description: '',
+    visibility: 'PUBLIC',
+  })
   const [formError, setFormError] = useState('')
 
   const { data: repos = [], isLoading } = useQuery({
@@ -65,6 +76,14 @@ export function RepositoriesPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['repositories'] }),
   })
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: RepositoryUpdateRequest }) => reposApi.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['repositories'] })
+      setEditing(null)
+    },
+  })
+
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
     setFormError('')
@@ -75,8 +94,9 @@ export function RepositoriesPage() {
   const filtered = repos.filter(
     (r) =>
       !filter ||
-      r.repoName.toLowerCase().includes(filter.toLowerCase()) ||
-      r.repoUrl.toLowerCase().includes(filter.toLowerCase()),
+      r.name.toLowerCase().includes(filter.toLowerCase()) ||
+      r.path.toLowerCase().includes(filter.toLowerCase()) ||
+      r.cloneHttpUrl.toLowerCase().includes(filter.toLowerCase()),
   )
 
   return (
@@ -105,34 +125,43 @@ export function RepositoriesPage() {
                 ]}
               />
               <Input
-                label="Repository Name"
-                value={form.repoName}
-                onChange={(e) => setForm((f) => ({ ...f, repoName: e.target.value }))}
+                label="命名空间"
+                value={form.namespace}
+                onChange={(e) => setForm((f) => ({ ...f, namespace: e.target.value }))}
                 required
               />
               <Input
-                label="Repository URL"
-                value={form.repoUrl}
-                onChange={(e) => setForm((f) => ({ ...f, repoUrl: e.target.value }))}
-                placeholder="https://github.com/org/repo"
+                label="仓库名称"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 required
               />
               <div className="grid grid-cols-2 gap-3">
                 <Input
-                  label="Default Branch"
-                  value={form.defaultBranch}
-                  onChange={(e) => setForm((f) => ({ ...f, defaultBranch: e.target.value }))}
+                  label="仓库路径"
+                  value={form.path}
+                  onChange={(e) => setForm((f) => ({ ...f, path: e.target.value }))}
+                  placeholder="repo-path"
+                  required
                 />
                 <Select
-                  label="Type"
-                  value={form.repoType}
-                  onChange={(e) => setForm((f) => ({ ...f, repoType: e.target.value as RepoType }))}
+                  label="可见性"
+                  value={form.visibility ?? 'PUBLIC'}
+                  onChange={(e) => setForm((f) => ({ ...f, visibility: e.target.value as RepositoryVisibility }))}
                   options={[
-                    { value: 'GITHUB', label: 'GitHub' },
-                    { value: 'GITLAB', label: 'GitLab' },
-                    { value: 'GITEE', label: 'Gitee' },
-                    { value: 'CUSTOM', label: 'Custom' },
+                    { value: 'PUBLIC', label: '公开' },
+                    { value: 'PRIVATE', label: '私有' },
+                    { value: 'INTERNAL', label: '内部' },
                   ]}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-[var(--color-text)]">描述</label>
+                <textarea
+                  value={form.description ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={3}
+                  className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
                 />
               </div>
               {formError && (
@@ -146,6 +175,57 @@ export function RepositoriesPage() {
                 </Button>
                 <Button type="submit" loading={createMutation.isPending}>
                   Link
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={editing !== null} onOpenChange={(value) => !value && setEditing(null)}>
+          <DialogContent title="编辑仓库">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!editing) return
+                updateMutation.mutate({ id: editing.id, data: editForm })
+              }}
+              className="space-y-4"
+            >
+              <Input label="命名空间" value={editing?.namespace ?? ''} disabled />
+              <Input label="仓库路径" value={editing?.path ?? ''} disabled />
+              <Input
+                label="仓库名称"
+                value={editForm.name ?? ''}
+                onChange={(e) => setEditForm((current) => ({ ...current, name: e.target.value }))}
+                required
+              />
+              <Select
+                label="可见性"
+                value={editForm.visibility ?? 'PUBLIC'}
+                onChange={(e) =>
+                  setEditForm((current) => ({ ...current, visibility: e.target.value as RepositoryVisibility }))
+                }
+                options={[
+                  { value: 'PUBLIC', label: '公开' },
+                  { value: 'PRIVATE', label: '私有' },
+                  { value: 'INTERNAL', label: '内部' },
+                ]}
+              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-[var(--color-text)]">描述</label>
+                <textarea
+                  value={editForm.description ?? ''}
+                  onChange={(e) => setEditForm((current) => ({ ...current, description: e.target.value }))}
+                  rows={3}
+                  className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="secondary" type="button" onClick={() => setEditing(null)}>
+                  取消
+                </Button>
+                <Button type="submit" loading={updateMutation.isPending}>
+                  保存
                 </Button>
               </div>
             </form>
@@ -189,18 +269,21 @@ export function RepositoriesPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-sm font-semibold text-[var(--color-text)]">{r.repoName}</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${REPO_TYPE_STYLES[r.repoType] ?? 'bg-gray-100 text-gray-700'}`}>
-                      {r.repoTypeDescription}
+                    <p className="text-sm font-semibold text-[var(--color-text)]">{r.name}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${VISIBILITY_STYLES[r.visibility] ?? 'bg-gray-100 text-gray-700'}`}>
+                      {r.visibilityDescription}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[r.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                      {r.statusDescription}
                     </span>
                   </div>
                   <a
-                    href={r.repoUrl}
+                    href={r.cloneHttpUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-[var(--color-primary)] hover:underline flex items-center gap-1"
                   >
-                    {r.repoUrl}
+                    {r.cloneHttpUrl}
                     <ExternalLink size={10} />
                   </a>
                 </div>
@@ -210,11 +293,24 @@ export function RepositoriesPage() {
                       {project.name}
                     </span>
                   )}
-                  <span className="text-xs font-mono text-[var(--color-text-subtle)]">/{r.defaultBranch}</span>
+                  <span className="text-xs font-mono text-[var(--color-text-subtle)]">{r.namespace}/{r.path}</span>
+                  <button
+                    className="p-1.5 rounded-[var(--radius-sm)] hover:bg-[var(--color-surface-3)] text-[var(--color-text-subtle)] transition-colors"
+                    onClick={() => {
+                      setEditForm({
+                        name: r.name,
+                        description: r.description ?? '',
+                        visibility: r.visibility,
+                      })
+                      setEditing(r)
+                    }}
+                  >
+                    <Pencil size={13} />
+                  </button>
                   <button
                     className="p-1.5 rounded-[var(--radius-sm)] hover:bg-red-50 text-[var(--color-text-subtle)] hover:text-red-500 transition-colors"
                     onClick={() => {
-                      if (confirm(`Remove repository "${r.repoName}"?`)) deleteMutation.mutate(r.id)
+                      if (confirm(`Remove repository "${r.name}"?`)) deleteMutation.mutate(r.id)
                     }}
                   >
                     <Trash2 size={13} />

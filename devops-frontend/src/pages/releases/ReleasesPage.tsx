@@ -353,7 +353,7 @@ function CreateVersionModal({
               onChange={set('repositoryId')}
               options={[
                 { value: '0', label: form.projectId > 0 ? '选择仓库...' : '先选择项目' },
-                ...repos.map((r) => ({ value: String(r.id), label: r.repoName })),
+                ...repos.map((r) => ({ value: String(r.id), label: r.name })),
               ]}
             />
           </div>
@@ -535,7 +535,7 @@ function CreatePipelineRunModal({
               onChange={set('repositoryId')}
               options={[
                 { value: '0', label: form.projectId ? '选择仓库...' : '先选择项目' },
-                ...repos.map((r) => ({ value: String(r.id), label: r.repoName })),
+                ...repos.map((r) => ({ value: String(r.id), label: r.name })),
               ]}
             />
             <Select
@@ -728,7 +728,7 @@ function VersionsPanel({ onCreate }: { onCreate: () => void }) {
   })
 
   const projectMap = Object.fromEntries(projects.map((p) => [p.id, p.name]))
-  const repoMap = Object.fromEntries(allRepos.map((r) => [r.id, r.repoName]))
+  const repoMap = Object.fromEntries(allRepos.map((r) => [r.id, r.name]))
 
   const filtered = versions.filter((v) => !filterStatus || v.status === filterStatus)
 
@@ -958,7 +958,7 @@ function PipelinesPanel({ onCreate }: { onCreate: () => void }) {
   })
 
   const projectMap = Object.fromEntries(projects.map((item) => [item.id, item.name]))
-  const repositoryMap = Object.fromEntries(repositories.map((item) => [item.id, item.repoName]))
+  const repositoryMap = Object.fromEntries(repositories.map((item) => [item.id, item.name]))
   const versionMap = Object.fromEntries(versions.map((item) => [item.id, `${item.versionNo} · ${item.title}`]))
 
   const runStats: Record<PipelineRunStatus, number> = {

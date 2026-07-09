@@ -49,8 +49,27 @@ public enum ErrorCode {
     TASK_RELATION_EXISTS(35003, "任务关联对象已存在"),
 
     // devops-code-service
-    REPOSITORY_NOT_FOUND(40001, "代码仓库不存在"),
-    REPOSITORY_URL_EXISTS(40002, "该项目下代码仓库地址已存在"),
+    CODE_REPOSITORY_NOT_FOUND(40001, "代码仓库不存在"),
+    CODE_REPOSITORY_EXISTS(40002, "代码仓库已存在"),
+    CODE_REPOSITORY_STATUS_INVALID(40003, "代码仓库状态不合法"),
+    CODE_REPOSITORY_VISIBILITY_INVALID(40004, "代码仓库可见性不合法"),
+    CODE_REPOSITORY_PATH_INVALID(40005, "代码仓库路径不合法"),
+    CODE_REPOSITORY_CREATE_FAILED(40006, "代码仓库创建失败"),
+
+    CODE_BRANCH_NOT_FOUND(41001, "代码分支不存在"),
+    CODE_BRANCH_EXISTS(41002, "代码分支已存在"),
+    CODE_BRANCH_NAME_INVALID(41003, "代码分支名称不合法"),
+
+    CODE_COMMIT_NOT_FOUND(42001, "代码提交不存在"),
+
+    CODE_MERGE_REQUEST_NOT_FOUND(43001, "合并请求不存在"),
+    CODE_MERGE_REQUEST_STATUS_INVALID(43002, "合并请求状态不合法"),
+    CODE_MERGE_REQUEST_BRANCH_INVALID(43003, "合并请求分支不合法"),
+    CODE_MERGE_REQUEST_CONFLICT(43004, "合并请求存在冲突"),
+
+    CODE_GIT_AUTH_FAILED(44001, "Git认证失败"),
+    CODE_GIT_PERMISSION_DENIED(44002, "Git权限不足"),
+    CODE_GIT_REPOSITORY_RESOLVE_FAILED(44003, "Git仓库解析失败"),
 
     // devops-release-service
     VERSION_NOT_FOUND(50001, "版本不存在"),

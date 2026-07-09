@@ -1,15 +1,14 @@
 package com.zpan.devops.code.controller;
 
 import com.zpan.devops.code.model.request.RepositoryCreateRequest;
+import com.zpan.devops.code.model.request.RepositoryListRequest;
 import com.zpan.devops.code.model.request.RepositoryUpdateRequest;
-import com.zpan.devops.code.model.vo.RepositoryVO;
+import com.zpan.devops.code.model.vo.CodeRepositoryVO;
 import com.zpan.devops.code.service.RepositoryService;
 import com.zpan.devops.common.response.Result;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/repositories")
@@ -19,25 +18,24 @@ public class RepositoryController {
     private final RepositoryService repositoryService;
 
     @PostMapping
-    public Result<RepositoryVO> create(@Valid @RequestBody RepositoryCreateRequest request) {
-        return Result.success(repositoryService.create(request));
+    public Result<CodeRepositoryVO> create(
+            @Valid @RequestBody RepositoryCreateRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long currentUserId) {
+        return Result.success(repositoryService.create(request, currentUserId));
     }
 
     @GetMapping
-    public Result<List<RepositoryVO>> list(@RequestParam(value = "projectId", required = false) Long projectId) {
-        if (projectId != null) {
-            return Result.success(repositoryService.listByProjectId(projectId));
-        }
-        return Result.success(repositoryService.list());
+    public Result<?> list(RepositoryListRequest request) {
+        return Result.success(repositoryService.list(request));
     }
 
     @GetMapping("/{id}")
-    public Result<RepositoryVO> getById(@PathVariable("id") Long id) {
+    public Result<CodeRepositoryVO> getById(@PathVariable("id") Long id) {
         return Result.success(repositoryService.getById(id));
     }
 
     @PutMapping("/{id}")
-    public Result<RepositoryVO> update(
+    public Result<CodeRepositoryVO> update(
             @PathVariable("id") Long id,
             @Valid @RequestBody RepositoryUpdateRequest request
     ) {

@@ -2,7 +2,7 @@ import { useState, type Dispatch, type SetStateAction } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import * as Tabs from '@radix-ui/react-tabs'
-import { ArrowLeft, Trash2, Plus, Flag, KeyRound } from 'lucide-react'
+import { ArrowLeft, Trash2, Plus, Flag, KeyRound, Pencil } from 'lucide-react'
 import { projectModulesApi, projectsApi, taskCommentsApi, taskPropertiesApi, taskPropertyValuesApi, tasksApi } from '@/api/work'
 import { reposApi } from '@/api/code'
 import { pipelineApi } from '@/api/pipeline'
@@ -15,6 +15,8 @@ import type {
   CredentialCreateRequest,
   CredentialUpdateRequest,
   ProjectModuleTree,
+  Repository,
+  RepositoryUpdateRequest,
   Task,
   TaskCommentTree,
   TaskCreateRequest,
@@ -1411,6 +1413,7 @@ function TaskPropertiesTab({ projectId }: { projectId: number }) {
 
 function RepoTab({ projectId }: { projectId: number }) {
   const [createOpen, setCreateOpen] = useState(false)
+  const [editingRepo, setEditingRepo] = useState<Repository | null>(null)
   const qc = useQueryClient()
   const { data: repos = [] } = useQuery({
     queryKey: ['repos', projectId],
@@ -1423,23 +1426,49 @@ function RepoTab({ projectId }: { projectId: number }) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['repos', projectId] })
       setCreateOpen(false)
+      setRepoForm({
+        namespace: '',
+        name: '',
+        path: '',
+        visibility: 'PUBLIC',
+        description: '',
+      })
+    },
+  })
+
+  const updateRepo = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: RepositoryUpdateRequest }) => reposApi.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['repos', projectId] })
+      setEditingRepo(null)
     },
   })
 
   const [repoForm, setRepoForm] = useState({
-    repoName: '',
-    repoUrl: '',
-    defaultBranch: 'main',
-    repoType: 'GITHUB' as const,
+    namespace: '',
+    name: '',
+    path: '',
+    visibility: 'PUBLIC' as const,
     description: '',
   })
 
-  const REPO_TYPE_STYLES: Record<string, string> = {
-    GITHUB: 'bg-gray-100 text-gray-700',
-    GITLAB: 'bg-orange-50 text-orange-700',
-    GITEE: 'bg-red-50 text-red-700',
-    CUSTOM: 'bg-purple-50 text-purple-700',
+  const VISIBILITY_STYLES: Record<string, string> = {
+    PRIVATE: 'bg-gray-100 text-gray-700',
+    PUBLIC: 'bg-emerald-50 text-emerald-700',
+    INTERNAL: 'bg-blue-50 text-blue-700',
   }
+
+  const STATUS_STYLES: Record<string, string> = {
+    ACTIVE: 'bg-emerald-50 text-emerald-700',
+    ARCHIVED: 'bg-amber-50 text-amber-700',
+    DISABLED: 'bg-gray-100 text-gray-700',
+  }
+
+  const [editRepoForm, setEditRepoForm] = useState<RepositoryUpdateRequest>({
+    name: '',
+    description: '',
+    visibility: 'PUBLIC',
+  })
 
   return (
     <div>
@@ -1460,34 +1489,43 @@ function RepoTab({ projectId }: { projectId: number }) {
               className="space-y-4"
             >
               <Input
-                label="Repository Name"
-                value={repoForm.repoName}
-                onChange={(e) => setRepoForm((f) => ({ ...f, repoName: e.target.value }))}
+                label="命名空间"
+                value={repoForm.namespace}
+                onChange={(e) => setRepoForm((f) => ({ ...f, namespace: e.target.value }))}
                 required
               />
               <Input
-                label="Repository URL"
-                value={repoForm.repoUrl}
-                onChange={(e) => setRepoForm((f) => ({ ...f, repoUrl: e.target.value }))}
-                placeholder="https://github.com/org/repo"
+                label="仓库名称"
+                value={repoForm.name}
+                onChange={(e) => setRepoForm((f) => ({ ...f, name: e.target.value }))}
                 required
               />
               <div className="grid grid-cols-2 gap-3">
                 <Input
-                  label="Default Branch"
-                  value={repoForm.defaultBranch}
-                  onChange={(e) => setRepoForm((f) => ({ ...f, defaultBranch: e.target.value }))}
+                  label="仓库路径"
+                  value={repoForm.path}
+                  onChange={(e) => setRepoForm((f) => ({ ...f, path: e.target.value }))}
+                  placeholder="repo-path"
+                  required
                 />
                 <Select
-                  label="Type"
-                  value={repoForm.repoType}
-                  onChange={(e) => setRepoForm((f) => ({ ...f, repoType: e.target.value as typeof repoForm.repoType }))}
+                  label="可见性"
+                  value={repoForm.visibility}
+                  onChange={(e) => setRepoForm((f) => ({ ...f, visibility: e.target.value as typeof repoForm.visibility }))}
                   options={[
-                    { value: 'GITHUB', label: 'GitHub' },
-                    { value: 'GITLAB', label: 'GitLab' },
-                    { value: 'GITEE', label: 'Gitee' },
-                    { value: 'CUSTOM', label: 'Custom' },
+                    { value: 'PUBLIC', label: '公开' },
+                    { value: 'PRIVATE', label: '私有' },
+                    { value: 'INTERNAL', label: '内部' },
                   ]}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-[var(--color-text)]">描述</label>
+                <textarea
+                  value={repoForm.description}
+                  onChange={(e) => setRepoForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={3}
+                  className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
@@ -1501,6 +1539,57 @@ function RepoTab({ projectId }: { projectId: number }) {
             </form>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={editingRepo !== null} onOpenChange={(value) => !value && setEditingRepo(null)}>
+          <DialogContent title="编辑仓库">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!editingRepo) return
+                updateRepo.mutate({ id: editingRepo.id, data: editRepoForm })
+              }}
+              className="space-y-4"
+            >
+              <Input label="命名空间" value={editingRepo?.namespace ?? ''} disabled />
+              <Input label="仓库路径" value={editingRepo?.path ?? ''} disabled />
+              <Input
+                label="仓库名称"
+                value={editRepoForm.name ?? ''}
+                onChange={(e) => setEditRepoForm((current) => ({ ...current, name: e.target.value }))}
+                required
+              />
+              <Select
+                label="可见性"
+                value={editRepoForm.visibility ?? 'PUBLIC'}
+                onChange={(e) =>
+                  setEditRepoForm((current) => ({ ...current, visibility: e.target.value as typeof current.visibility }))
+                }
+                options={[
+                  { value: 'PUBLIC', label: '公开' },
+                  { value: 'PRIVATE', label: '私有' },
+                  { value: 'INTERNAL', label: '内部' },
+                ]}
+              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-[var(--color-text)]">描述</label>
+                <textarea
+                  value={editRepoForm.description ?? ''}
+                  onChange={(e) => setEditRepoForm((current) => ({ ...current, description: e.target.value }))}
+                  rows={3}
+                  className="w-full resize-none rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="secondary" type="button" onClick={() => setEditingRepo(null)}>
+                  取消
+                </Button>
+                <Button type="submit" loading={updateRepo.isPending}>
+                  保存
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
       {repos.length === 0 ? (
         <p className="text-sm text-center text-[var(--color-text-subtle)] py-12">No repositories linked yet.</p>
@@ -1509,14 +1598,31 @@ function RepoTab({ projectId }: { projectId: number }) {
           {repos.map((r) => (
             <div key={r.id} className="bg-[var(--color-surface-2)] rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-[var(--color-text)]">{r.repoName}</p>
-                <a href={r.repoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--color-primary)] hover:underline">{r.repoUrl}</a>
+                <p className="text-sm font-medium text-[var(--color-text)]">{r.name}</p>
+                <a href={r.cloneHttpUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--color-primary)] hover:underline">{r.cloneHttpUrl}</a>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-[var(--color-text-muted)]">{r.defaultBranch}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${REPO_TYPE_STYLES[r.repoType] ?? 'bg-gray-100 text-gray-700'}`}>
-                  {r.repoTypeDescription}
+                <span className="text-xs font-mono text-[var(--color-text-muted)]">{r.namespace}/{r.path}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${VISIBILITY_STYLES[r.visibility] ?? 'bg-gray-100 text-gray-700'}`}>
+                  {r.visibilityDescription}
                 </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_STYLES[r.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                  {r.statusDescription}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-[var(--radius-sm)] p-1.5 text-[var(--color-text-subtle)] transition-colors hover:bg-[var(--color-surface-3)]"
+                  onClick={() => {
+                    setEditRepoForm({
+                      name: r.name,
+                      description: r.description ?? '',
+                      visibility: r.visibility,
+                    })
+                    setEditingRepo(r)
+                  }}
+                >
+                  <Pencil size={13} />
+                </button>
               </div>
             </div>
           ))}

@@ -87,7 +87,7 @@ export function PipelineDetailPage() {
   })
 
   const projectName = projects.find((project) => project.id === pipeline?.projectId)?.name
-  const repoName = repositories.find((repo) => repo.id === pipeline?.repositoryId)?.repoName
+  const repoName = repositories.find((repo) => repo.id === pipeline?.repositoryId)?.name
 
   if (!isValidId) {
     return <div className="p-8 text-sm text-[var(--color-text-muted)]">无效的流水线 ID。</div>

@@ -1,22 +1,22 @@
 package com.zpan.devops.code.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.zpan.devops.code.model.request.RepositoryCreateRequest;
+import com.zpan.devops.code.model.request.RepositoryListRequest;
 import com.zpan.devops.code.model.request.RepositoryUpdateRequest;
-import com.zpan.devops.code.model.vo.RepositoryVO;
-
-import java.util.List;
+import com.zpan.devops.code.model.vo.CodeRepositoryVO;
 
 public interface RepositoryService {
 
-    RepositoryVO create(RepositoryCreateRequest request);
+    CodeRepositoryVO create(RepositoryCreateRequest request, Long currentUserId);
 
-    List<RepositoryVO> list();
+    Page<CodeRepositoryVO> list(RepositoryListRequest request);
 
-    List<RepositoryVO> listByProjectId(Long projectId);
+    CodeRepositoryVO getById(Long id);
 
-    RepositoryVO getById(Long id);
+    CodeRepositoryVO update(Long id, RepositoryUpdateRequest request);
 
-    RepositoryVO update(Long id, RepositoryUpdateRequest request);
+    void archive(Long id);
 
     void delete(Long id);
 

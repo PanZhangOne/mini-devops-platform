@@ -60,6 +60,12 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
+        // 开放 /api/code/git/** 相关API
+        if (path.startsWith("/api/code/git")) {
+            return chain.filter(exchange);
+        }
+
+
         String authorization = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (authorization == null || authorization.isBlank()) {

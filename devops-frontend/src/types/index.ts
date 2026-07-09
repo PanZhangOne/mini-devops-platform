@@ -180,7 +180,7 @@ export interface TaskPropertyCreateRequest {
   enabled?: boolean
 }
 
-export interface TaskPropertyUpdateRequest extends TaskPropertyCreateRequest {}
+export type TaskPropertyUpdateRequest = TaskPropertyCreateRequest
 
 export interface TaskPropertyValue {
   id: number | null
@@ -281,36 +281,41 @@ export interface ProjectModuleUpdateRequest {
 
 // ─── Repository ───────────────────────────────────────────────────────────────
 
-export type RepoType = 'GITLAB' | 'GITHUB' | 'GITEE' | 'CUSTOM'
+export type RepositoryVisibility = 'PRIVATE' | 'PUBLIC' | 'INTERNAL'
+export type RepositoryStatus = 'ACTIVE' | 'ARCHIVED' | 'DISABLED'
 
 export interface Repository {
   id: number
   projectId: number
-  repoName: string
-  repoUrl: string
+  namespace: string
+  name: string
+  path: string
+  description: string | null
   defaultBranch: string
-  repoType: RepoType
-  repoTypeDescription: string
-  description: string
+  visibility: RepositoryVisibility | string
+  visibilityDescription: string
+  repositoryPath: string
+  cloneHttpUrl: string
+  status: RepositoryStatus | string
+  statusDescription: string
+  createdBy: number | null
   createdAt: string
   updatedAt: string
 }
 
 export interface RepositoryCreateRequest {
   projectId: number
-  repoName: string
-  repoUrl: string
-  defaultBranch: string
-  repoType: RepoType
+  namespace: string
+  name: string
+  path: string
   description?: string
+  visibility?: RepositoryVisibility | string
 }
 
 export interface RepositoryUpdateRequest {
-  repoName: string
-  repoUrl: string
-  defaultBranch: string
-  repoType: RepoType
+  name?: string
   description?: string
+  visibility?: RepositoryVisibility | string
 }
 
 // ─── Version (Release) ────────────────────────────────────────────────────────

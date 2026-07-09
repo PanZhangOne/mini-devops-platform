@@ -202,7 +202,7 @@ public class PipelineRunServiceImpl implements PipelineRunService {
         }
 
         if (!Boolean.TRUE.equals(result.getData())) {
-            throw new BizException(ErrorCode.REPOSITORY_NOT_FOUND);
+            throw new BizException(ErrorCode.CODE_REPOSITORY_NOT_FOUND);
         }
     }
 

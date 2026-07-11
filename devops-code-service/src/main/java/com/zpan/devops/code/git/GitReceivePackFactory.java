@@ -36,6 +36,7 @@ public class GitReceivePackFactory implements ReceivePackFactory<HttpServletRequ
         Object repositoryId = request.getAttribute(GitRequestAttributes.REPOSITORY_ID);
         Object namespace = request.getAttribute(GitRequestAttributes.REPOSITORY_NAMESPACE);
         Object repositoryPath = request.getAttribute(GitRequestAttributes.REPOSITORY_PATH);
+        Object gitUserId = request.getAttribute(GitRequestAttributes.GIT_USER_ID);
 
         if (repositoryId instanceof Long value) {
             context.setRepositoryId(value);
@@ -47,10 +48,13 @@ public class GitReceivePackFactory implements ReceivePackFactory<HttpServletRequ
         if (repositoryPath instanceof String value) {
             context.setRepositoryPath(value);
         }
+        if (gitUserId instanceof  Long value) {
+            context.setPusherId(value);
+        }
         if (context.getRepositoryId() == null) {
             throw new IllegalStateException("Git repository id is missing in request attributes");
         }
-        context.setPusherId(null);
+
 
         return context;
     }

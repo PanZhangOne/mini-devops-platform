@@ -17,10 +17,14 @@ public class GitStorageProperties {
      */
     private String cloneBaseUrl;
 
+    private BasicAuth basicAuth = new BasicAuth();
+
     @Data
     public static class BasicAuth {
         private String username;
 
         private String token;
+
+        private Long userId;
     }
 }

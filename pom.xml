@@ -42,6 +42,7 @@
         <jjwt.version>0.12.6</jjwt.version>
         <rocketmq.spring.version>2.3.1</rocketmq.spring.version>
         <jgit.version>7.7.0.202606012155-r</jgit.version>
+        <mybatis-plus.version>3.5.15</mybatis-plus.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -81,6 +82,12 @@
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
                 <version>${mybatis.plus.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>${mybatis-plus.version}</version>
             </dependency>
 
             <!-- Knife4j -->

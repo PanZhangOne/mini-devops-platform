@@ -1,5 +1,6 @@
 package com.zpan.devops.common.request;
 
+import jakarta.validation.constraints.Max;
 import lombok.Data;
 
 @Data
@@ -9,6 +10,7 @@ public class PagedRequest {
 
     private Integer pageNo = 1;
 
+    @Max(value = 100, message = "数量不能大于100")
     private Integer pageSize = DEFAULT_PAGE_SIZE;
 
     private String keyword;

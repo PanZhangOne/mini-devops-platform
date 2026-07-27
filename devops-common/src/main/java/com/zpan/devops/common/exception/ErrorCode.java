@@ -61,6 +61,7 @@ public enum ErrorCode {
     CODE_BRANCH_NAME_INVALID(41003, "代码分支名称不合法"),
 
     CODE_COMMIT_NOT_FOUND(42001, "代码提交不存在"),
+    CODE_COMMIT_HASH_INVALID(42002, "Commit Hash不合法"),
 
     CODE_MERGE_REQUEST_NOT_FOUND(43001, "合并请求不存在"),
     CODE_MERGE_REQUEST_STATUS_INVALID(43002, "合并请求状态不合法"),
